@@ -12,7 +12,7 @@ Game::Game() {
                             GameEngine::HEIGHT,
                             SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
-  // vulkanRenderer = new VulkanStuff::VulkanRenderer(window);
+  vulkanRenderer = new VulkanEngine::VulkanRenderer(window);
 
   isRunning = true;
 }

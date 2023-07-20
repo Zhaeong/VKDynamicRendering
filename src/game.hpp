@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include <vulkan_renderer.hpp>
+
 namespace GameEngine {
 
 static const int WIDTH = 800;
@@ -14,7 +16,7 @@ public:
   bool isRunning;
 
   SDL_Window *window;
-  // VulkanStuff::VulkanRenderer *vulkanRenderer;
+  VulkanEngine::VulkanRenderer *vulkanRenderer;
 
   Game();
   ~Game();
