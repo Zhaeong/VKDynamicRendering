@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL_vulkan.h>
 #include <iostream>
+#include <set>
 #include <utils.hpp>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -114,6 +115,8 @@ inline std::vector<const char *> iGetRequiredVkExtensions(SDL_Window *window) {
 inline Utils::QueueFamilyIndices iFindQueueFamilies(VkPhysicalDevice device,
                                                     VkSurfaceKHR surface) {
   Utils::QueueFamilyIndices indices;
+  indices.graphicsFamily = -1;
+  indices.presentFamily = -1;
 
   // Queues are what you submit command buffers to, and a queue family describes
   // a set of queues that do a certain thing e.g. graphics for draw calls
@@ -150,4 +153,90 @@ inline Utils::QueueFamilyIndices iFindQueueFamilies(VkPhysicalDevice device,
 
   return indices;
 }
+
+inline Utils::SwapChainSupportDetails
+iQuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+  Utils::SwapChainSupportDetails details;
+
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+                                            &details.capabilities);
+
+  uint32_t formatCount;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+  if (formatCount != 0) {
+    details.formats.resize(formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                                         details.formats.data());
+  } else {
+    std::cout << "Swapchain Support, has no formats";
+  }
+
+  uint32_t presentModeCount;
+  vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount,
+                                            nullptr);
+
+  if (presentModeCount != 0) {
+    details.presentModes.resize(presentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        device, surface, &presentModeCount, details.presentModes.data());
+  } else {
+    std::cout << "Swapchain Support, has no present modes";
+  }
+  return details;
+}
+
+inline bool
+iCheckDeviceExtensionSupport(VkPhysicalDevice device,
+                             std::vector<const char *> deviceExtensions) {
+  uint32_t extensionCount;
+  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
+                                       nullptr);
+
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
+                                       availableExtensions.data());
+
+  std::set<std::string> requiredExtensions(deviceExtensions.begin(),
+                                           deviceExtensions.end());
+
+  for (int i = 0; i < availableExtensions.size(); i++) {
+    // std::cout << "Avail: " << availableExtensions[i].extensionName
+    //           << " Version: " << availableExtensions[i].specVersion << "\n";
+    requiredExtensions.erase(availableExtensions[i].extensionName);
+  }
+  if (requiredExtensions.empty()) {
+    std::cout << "Physical device contains all required extensions\n";
+  }
+
+  return requiredExtensions.empty();
+}
+
+inline bool iIsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface,
+                              std::vector<const char *> deviceExtensions) {
+
+  VkPhysicalDeviceProperties deviceProperties;
+  VkPhysicalDeviceFeatures deviceFeatures;
+
+  vkGetPhysicalDeviceProperties(device, &deviceProperties);
+  vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+  std::cout << "Device Name: " << deviceProperties.deviceName
+            << " Device ID: " << deviceProperties.deviceID << "\n";
+
+  Utils::QueueFamilyIndices indices =
+      VulkanInit::iFindQueueFamilies(device, surface);
+
+  bool swapChainAdequate = false;
+  Utils::SwapChainSupportDetails swapChainSupport =
+      iQuerySwapChainSupport(device, surface);
+
+  swapChainAdequate = !swapChainSupport.formats.empty() &&
+                      !swapChainSupport.presentModes.empty();
+
+  return indices.graphicsFamily != -1 && indices.presentFamily != -1 &&
+         iCheckDeviceExtensionSupport(device, deviceExtensions) &&
+         swapChainAdequate && deviceFeatures.samplerAnisotropy;
+}
+
 } // namespace VulkanInit

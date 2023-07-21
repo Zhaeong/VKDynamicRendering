@@ -15,10 +15,18 @@ public:
 
   // This needs to be false else other layers don't work
   const bool mEnableValidationLayers = true;
+
+  VkSurfaceKHR mSurface;
+
+  VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
+
+  //===================================================
+  // Functions
   VulkanRenderer(SDL_Window *sdlWindow);
   ~VulkanRenderer();
 
   // Initial object creation
   void createInstance();
+  void pickPhysicalDevice();
 };
 } // namespace VulkanEngine
