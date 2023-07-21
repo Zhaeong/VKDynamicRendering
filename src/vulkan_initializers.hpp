@@ -18,8 +18,7 @@ inline VkApplicationInfo application_info() {
   application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   application_info.pEngineName = "No Engine";
   application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  // application_info.apiVersion = VK_API_VERSION_1_2;
-  application_info.apiVersion = VK_API_VERSION_1_1;
+  application_info.apiVersion = VK_API_VERSION_1_2;
   return application_info;
 }
 
@@ -45,6 +44,29 @@ instance_create_info(VkApplicationInfo appInfo, uint32_t enabledExtensionCount,
   instance_create_info.pNext = nullptr;
 
   return instance_create_info;
+}
+
+inline VkDeviceCreateInfo device_create_info(
+    uint32_t queueCreateInfoCount, VkDeviceQueueCreateInfo *queueCreateInfo,
+    uint32_t enabledLayerCount, const char *const *enabledLayerNames,
+    uint32_t enabledExtensionCount, const char *const *enabledExtensionNames,
+    VkPhysicalDeviceFeatures *enabledFeatures) {
+  VkDeviceCreateInfo device_create_info{};
+
+  device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+  device_create_info.queueCreateInfoCount = queueCreateInfoCount;
+  device_create_info.pQueueCreateInfos = queueCreateInfo;
+
+  device_create_info.enabledLayerCount = enabledLayerCount;
+  device_create_info.ppEnabledLayerNames = enabledLayerNames;
+
+  device_create_info.enabledExtensionCount = enabledExtensionCount;
+  device_create_info.ppEnabledExtensionNames = enabledExtensionNames;
+
+  device_create_info.pEnabledFeatures = enabledFeatures;
+
+  return device_create_info;
 }
 
 //===================================================
@@ -150,6 +172,10 @@ inline Utils::QueueFamilyIndices iFindQueueFamilies(VkPhysicalDevice device,
 
   std::cout << "graphicsFamily: " << indices.graphicsFamily
             << " presentFamily: " << indices.presentFamily << "\n";
+
+  if (indices.graphicsFamily == -1 || indices.presentFamily == -1) {
+    throw std::runtime_error("Issue with iFindQueueFamilies");
+  }
 
   return indices;
 }
