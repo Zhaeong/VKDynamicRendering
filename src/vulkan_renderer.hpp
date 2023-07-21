@@ -11,6 +11,7 @@ class VulkanRenderer {
 public:
   SDL_Window *mWindow;
 
+  // Device Specific===================================
   std::vector<const char *> mValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 
   VkInstance mInstance;
@@ -21,7 +22,7 @@ public:
   VkSurfaceKHR mSurface;
 
   std::vector<const char *> mDeviceExtensions = {
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
       VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
       VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME};
 
@@ -31,6 +32,10 @@ public:
 
   VkQueue mGraphicsQueue;
   VkQueue mPresentQueue;
+
+  // Command Submission================================
+  const int MAX_FRAMES_IN_FLIGHT = 2;
+  //===================================================
 
   //===================================================
   // Functions

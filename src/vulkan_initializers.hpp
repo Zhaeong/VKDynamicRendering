@@ -18,7 +18,7 @@ inline VkApplicationInfo application_info() {
   application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   application_info.pEngineName = "No Engine";
   application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  application_info.apiVersion = VK_API_VERSION_1_2;
+  application_info.apiVersion = VK_API_VERSION_1_3;
   return application_info;
 }
 
@@ -44,6 +44,17 @@ instance_create_info(VkApplicationInfo appInfo, uint32_t enabledExtensionCount,
   instance_create_info.pNext = nullptr;
 
   return instance_create_info;
+}
+
+inline VkDeviceQueueCreateInfo
+device_queue_create_info(uint32_t queueFamilyIndex, uint32_t queueCount,
+                         const float *queuePriority) {
+  VkDeviceQueueCreateInfo device_queue_create_info{};
+  device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  device_queue_create_info.queueFamilyIndex = queueFamilyIndex;
+  device_queue_create_info.queueCount = queueCount;
+  device_queue_create_info.pQueuePriorities = queuePriority;
+  return device_queue_create_info;
 }
 
 inline VkDeviceCreateInfo device_create_info(

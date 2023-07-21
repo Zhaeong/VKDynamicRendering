@@ -98,19 +98,14 @@ void VulkanRenderer::createLogicalDevice() {
   // execution
   float queuePriority = 1.0f;
   for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
-
-    VkDeviceQueueCreateInfo queueCreateInfo{};
+    VkDeviceQueueCreateInfo queueCreateInfo =
+        VulkanInit::device_queue_create_info(i, 1, &queuePriority);
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = i;
-    queueCreateInfo.queueCount = 1;
-
-    queueCreateInfo.pQueuePriorities = &queuePriority;
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
   // Specifying used device features
   VkPhysicalDeviceFeatures deviceFeatures{};
-
   // enable anisotropy
   deviceFeatures.samplerAnisotropy = VK_TRUE;
 
@@ -128,9 +123,15 @@ void VulkanRenderer::createLogicalDevice() {
       &deviceFeatures);
 
   // Query vk12 features
-  VkPhysicalDeviceVulkan12Features vk12Features{};
-  vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-  createInfo.pNext = &vk12Features;
+  // VkPhysicalDeviceVulkan12Features vk12Features{};
+  // vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+  // createInfo.pNext = &vk12Features;
+  VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_feature{};
+  dynamic_rendering_feature.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+  dynamic_rendering_feature.dynamicRendering = VK_TRUE;
+
+  createInfo.pNext = &dynamic_rendering_feature;
 
   if (vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mLogicalDevice) !=
       VK_SUCCESS) {
