@@ -15,8 +15,15 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   createCommandPool();
   createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
+  createSyncObjects(MAX_FRAMES_IN_FLIGHT);
 }
 VulkanRenderer::~VulkanRenderer() {
+  for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
+    vkDestroySemaphore(mLogicalDevice, mRenderFinishedSemaphores[i], nullptr);
+    vkDestroySemaphore(mLogicalDevice, mImageAvailableSemaphores[i], nullptr);
+    vkDestroyFence(mLogicalDevice, mInFlightFences[i], nullptr);
+  }
+
   vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
   vkDestroyDevice(mLogicalDevice, nullptr);
   vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
@@ -178,6 +185,32 @@ void VulkanRenderer::createCommandBuffers(uint32_t number) {
   if (vkAllocateCommandBuffers(mLogicalDevice, &allocInfo,
                                mCommandBuffers.data()) != VK_SUCCESS) {
     throw std::runtime_error("failed to allocate command buffers!");
+  }
+}
+
+void VulkanRenderer::createSyncObjects(uint32_t number) {
+  mImageAvailableSemaphores.resize(number);
+  mRenderFinishedSemaphores.resize(number);
+  mInFlightFences.resize(number);
+
+  VkSemaphoreCreateInfo semaphoreInfo{};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceInfo{};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (size_t i = 0; i < number; i++) {
+    if (vkCreateSemaphore(mLogicalDevice, &semaphoreInfo, nullptr,
+                          &mImageAvailableSemaphores[i]) != VK_SUCCESS ||
+        vkCreateSemaphore(mLogicalDevice, &semaphoreInfo, nullptr,
+                          &mRenderFinishedSemaphores[i]) != VK_SUCCESS ||
+        vkCreateFence(mLogicalDevice, &fenceInfo, nullptr,
+                      &mInFlightFences[i]) != VK_SUCCESS) {
+
+      throw std::runtime_error(
+          "failed to create synchronization objects for a frame!");
+    }
   }
 }
 

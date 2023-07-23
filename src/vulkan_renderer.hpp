@@ -39,6 +39,10 @@ public:
   VkCommandPool mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
 
+  std::vector<VkSemaphore> mImageAvailableSemaphores;
+  std::vector<VkSemaphore> mRenderFinishedSemaphores;
+  std::vector<VkFence> mInFlightFences;
+
   //===================================================
 
   //===================================================
@@ -54,5 +58,6 @@ public:
   // Command objects
   void createCommandPool();
   void createCommandBuffers(uint32_t number);
+  void createSyncObjects(uint32_t number);
 };
 } // namespace VulkanEngine
