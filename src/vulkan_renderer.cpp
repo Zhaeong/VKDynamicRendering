@@ -12,8 +12,16 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   pickPhysicalDevice();
   createLogicalDevice();
+
+  createCommandPool();
+  createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
 }
-VulkanRenderer::~VulkanRenderer() {}
+VulkanRenderer::~VulkanRenderer() {
+  vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
+  vkDestroyDevice(mLogicalDevice, nullptr);
+  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+  vkDestroyInstance(mInstance, nullptr);
+}
 
 void VulkanRenderer::createInstance() {
 
@@ -143,4 +151,34 @@ void VulkanRenderer::createLogicalDevice() {
   // Now create the present queue
   vkGetDeviceQueue(mLogicalDevice, indices.presentFamily, 0, &mPresentQueue);
 }
+
+void VulkanRenderer::createCommandPool() {
+  Utils::QueueFamilyIndices queueFamilyIndices =
+      VulkanInit::iFindQueueFamilies(mPhysicalDevice, mSurface);
+
+  VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
+  poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+
+  if (vkCreateCommandPool(mLogicalDevice, &poolInfo, nullptr, &mCommandPool) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create command pool!");
+  }
+}
+
+void VulkanRenderer::createCommandBuffers(uint32_t number) {
+
+  mCommandBuffers.resize(number);
+
+  VkCommandBufferAllocateInfo allocInfo =
+      VulkanInit::command_buffer_allocate_info(
+          mCommandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+          (uint32_t)mCommandBuffers.size());
+
+  if (vkAllocateCommandBuffers(mLogicalDevice, &allocInfo,
+                               mCommandBuffers.data()) != VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate command buffers!");
+  }
+}
+
 } // namespace VulkanEngine

@@ -35,6 +35,10 @@ public:
 
   // Command Submission================================
   const int MAX_FRAMES_IN_FLIGHT = 2;
+
+  VkCommandPool mCommandPool;
+  std::vector<VkCommandBuffer> mCommandBuffers;
+
   //===================================================
 
   //===================================================
@@ -46,5 +50,9 @@ public:
   void createInstance();
   void pickPhysicalDevice();
   void createLogicalDevice();
+
+  // Command objects
+  void createCommandPool();
+  void createCommandBuffers(uint32_t number);
 };
 } // namespace VulkanEngine
