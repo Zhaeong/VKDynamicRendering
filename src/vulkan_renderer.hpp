@@ -33,7 +33,8 @@ public:
   VkQueue mGraphicsQueue;
   VkQueue mPresentQueue;
 
-  // Command Submission================================
+  //===================================================
+  // Command Submission
   const int MAX_FRAMES_IN_FLIGHT = 2;
 
   VkCommandPool mCommandPool;
@@ -44,6 +45,13 @@ public:
   std::vector<VkFence> mInFlightFences;
 
   //===================================================
+  // Swapchain
+  VkSwapchainKHR mSwapChain;
+  uint32_t mSwapChainImageCount;
+  std::vector<VkImage> mSwapChainImages;
+  VkFormat mSwapChainImageFormat;
+  VkExtent2D mSwapChainExtent;
+  std::vector<VkImageView> mSwapChainImageViews;
 
   //===================================================
   // Functions
@@ -55,9 +63,13 @@ public:
   void pickPhysicalDevice();
   void createLogicalDevice();
 
-  // Command objects
+  // Command Submission objects
   void createCommandPool();
   void createCommandBuffers(uint32_t number);
   void createSyncObjects(uint32_t number);
+
+  // Swapchain
+  void createSwapChain();
+  void createSwapChainImageViews();
 };
 } // namespace VulkanEngine

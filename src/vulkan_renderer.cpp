@@ -16,6 +16,8 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createCommandPool();
   createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
   createSyncObjects(MAX_FRAMES_IN_FLIGHT);
+
+  createSwapChain();
 }
 VulkanRenderer::~VulkanRenderer() {
   for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
@@ -212,6 +214,29 @@ void VulkanRenderer::createSyncObjects(uint32_t number) {
           "failed to create synchronization objects for a frame!");
     }
   }
+}
+
+void VulkanRenderer::createSwapChain() {
+  Utils::SwapChainSupportDetails swapChainSupport =
+      VulkanInit::iQuerySwapChainSupport(mPhysicalDevice, mSurface);
+
+  VkSurfaceFormatKHR surfaceFormat =
+      VulkanInit::iChooseSwapSurfaceFormat(swapChainSupport.formats);
+  VkPresentModeKHR presentMode =
+      VulkanInit::iChooseSwapPresentMode(swapChainSupport.presentModes);
+  VkExtent2D extent =
+      VulkanInit::iChooseSwapExtent(mWindow, swapChainSupport.capabilities);
+
+  // minimum + 1, and don't go over maximum
+  mSwapChainImageCount = swapChainSupport.capabilities.minImageCount + 1;
+  if (swapChainSupport.capabilities.maxImageCount > 0 &&
+      mSwapChainImageCount > swapChainSupport.capabilities.maxImageCount) {
+    mSwapChainImageCount = swapChainSupport.capabilities.maxImageCount;
+  }
+
+  std::cout << "SwapChain Image count: " << mSwapChainImageCount << "\n";
+  // VK_FORMAT_B8G8R8A8_SRGB = 50,
+  std::cout << "SwapChain Image format: " << surfaceFormat.format << "\n";
 }
 
 } // namespace VulkanEngine

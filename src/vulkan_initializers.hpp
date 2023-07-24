@@ -1,6 +1,8 @@
 #pragma once
 #include <SDL2/SDL_vulkan.h>
+#include <algorithm>
 #include <iostream>
+#include <limits>
 #include <set>
 #include <utils.hpp>
 #include <vector>
@@ -293,6 +295,61 @@ inline bool iIsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface,
   return indices.graphicsFamily != -1 && indices.presentFamily != -1 &&
          iCheckDeviceExtensionSupport(device, deviceExtensions) &&
          swapChainAdequate && deviceFeatures.samplerAnisotropy;
+}
+inline VkSurfaceFormatKHR iChooseSwapSurfaceFormat(
+    const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+
+  for (const auto &availableFormat : availableFormats) {
+    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      return availableFormat;
+    }
+  }
+
+  // Else just settle on the first format
+  return availableFormats[0];
+}
+
+inline VkPresentModeKHR iChooseSwapPresentMode(
+    const std::vector<VkPresentModeKHR> &availablePresentModes) {
+  for (const auto &availablePresentMode : availablePresentModes) {
+    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+      return availablePresentMode;
+    }
+  }
+
+  return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+// Extent is resolution of swap chain images which is based on surface
+
+// capabilities currentExtent is the current width and height of the surface, or
+// the special value (0xFFFFFFFF, 0xFFFFFFFF) indicating that the surface size
+// will be determined by the extent of a swapchain targeting the surface.
+inline VkExtent2D
+iChooseSwapExtent(SDL_Window *window,
+                  const VkSurfaceCapabilitiesKHR &capabilities) {
+
+  if (capabilities.currentExtent.width !=
+      std::numeric_limits<uint32_t>::max()) {
+    return capabilities.currentExtent;
+  } else {
+    int width, height;
+    // glfwGetFramebufferSize(window, &width, &height);
+    SDL_Vulkan_GetDrawableSize(window, &width, &height);
+
+    VkExtent2D actualExtent = {static_cast<uint32_t>(width),
+                               static_cast<uint32_t>(height)};
+
+    actualExtent.width =
+        std::clamp(actualExtent.width, capabilities.minImageExtent.width,
+                   capabilities.maxImageExtent.width);
+    actualExtent.height =
+        std::clamp(actualExtent.height, capabilities.minImageExtent.height,
+                   capabilities.maxImageExtent.height);
+
+    return actualExtent;
+  }
 }
 
 } // namespace VulkanInit
