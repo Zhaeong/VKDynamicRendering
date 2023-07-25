@@ -523,14 +523,44 @@ void VulkanRenderer::createGraphicsPipeline() {
 
   PIPElineInfo.layout = mPipelineLayout;
   //================================================================================================
-
   PIPElineInfo.renderPass = nullptr;
   PIPElineInfo.subpass = 0;
   //================================================================================================
-
   PIPElineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   PIPElineInfo.basePipelineIndex = -1;              // Optional
+  //================================================================================================
+  // For dynamic rendering
+  //================================================================================================
+  VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{};
+  pipeline_rendering_create_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 
+  pipeline_rendering_create_info.colorAttachmentCount = 1;
+  pipeline_rendering_create_info.pColorAttachmentFormats =
+      &mSwapChainImageFormat;
+
+  pipeline_rendering_create_info.depthAttachmentFormat =
+      VulkanHelper::findSupportedFormat(
+          mPhysicalDevice,
+          {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+           VK_FORMAT_D24_UNORM_S8_UINT},
+          VK_IMAGE_TILING_OPTIMAL,
+          VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+  pipeline_rendering_create_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
+
+  PIPElineInfo.pNext = &pipeline_rendering_create_info;
+
+  //================================================================================================
+  if (vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1,
+                                &PIPElineInfo, nullptr,
+                                &mGraphicsPipeline) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create graphics pipeline!");
+  }
+
+  // Cleanup===========
+  vkDestroyShaderModule(mLogicalDevice, fragShaderModule, nullptr);
+  vkDestroyShaderModule(mLogicalDevice, vertShaderModule, nullptr);
   //================================================================================================
 }
 
