@@ -1,9 +1,6 @@
 #pragma once
 #include <SDL2/SDL_vulkan.h>
-#include <algorithm>
 #include <iostream>
-#include <limits>
-#include <set>
 #include <utils.hpp>
 #include <vector>
 #include <vulkan/vulkan.h>

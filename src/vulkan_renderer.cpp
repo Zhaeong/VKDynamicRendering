@@ -315,6 +315,51 @@ void VulkanRenderer::createSwapChainImageViews() {
   }
 }
 
-void VulkanRenderer::createGraphicsPipeline() {}
+void VulkanRenderer::createGraphicsPipeline() {
+
+  //================================================================================================
+  // Create pipeline
+  //================================================================================================
+  VkGraphicsPipelineCreateInfo PIPElineInfo{};
+  PIPElineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+
+  //================================================================================================
+  // Create shader stage
+  //================================================================================================
+  std::string vertShaderPath = "shaders/simple_shader.vert.spv";
+  std::string fragShaderPath = "shaders/simple_shader.frag.spv";
+  auto vertShaderCode = VulkanHelper::readFile(vertShaderPath);
+  auto fragShaderCode = VulkanHelper::readFile(fragShaderPath);
+
+  // Vertex Shader
+  VkShaderModule vertShaderModule =
+      VulkanHelper::createShaderModule(mLogicalDevice, vertShaderCode);
+  VkShaderModule fragShaderModule =
+      VulkanHelper::createShaderModule(mLogicalDevice, fragShaderCode);
+
+  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+  vertShaderStageInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+
+  vertShaderStageInfo.module = vertShaderModule;
+  vertShaderStageInfo.pName = "main";
+
+  // Fragment Shader
+  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+  fragShaderStageInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  fragShaderStageInfo.module = fragShaderModule;
+  fragShaderStageInfo.pName = "main";
+
+  // Shader stage createInfo
+  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
+                                                    fragShaderStageInfo};
+
+  PIPElineInfo.stageCount = 2;
+  PIPElineInfo.pStages = shaderStages;
+  //================================================================================================
+}
 
 } // namespace VulkanEngine

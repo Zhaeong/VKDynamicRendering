@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL_vulkan.h>
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <set>
@@ -296,6 +297,44 @@ inline VkImageView createImageView(VkDevice device, VkImage image,
   }
 
   return imageView;
+}
+
+inline std::vector<char> readFile(std::string filePath) {
+
+  // std::ios::ate means seek the end immediatly
+  // std::ios::binary read it in as a binary
+  std::ifstream file{filePath, std::ios::ate | std::ios::binary};
+
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file: " + filePath);
+  }
+
+  // tellg gets last position which is the filesize
+  size_t fileSize = static_cast<size_t>(file.tellg());
+
+  std::vector<char> buffer(fileSize);
+
+  // Go to beginning
+  file.seekg(0);
+  file.read(buffer.data(), fileSize);
+  file.close();
+
+  return buffer;
+}
+
+inline VkShaderModule createShaderModule(VkDevice logicalDevice,
+                                         const std::vector<char> &code) {
+  VkShaderModuleCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = code.size();
+  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+
+  VkShaderModule shaderModule;
+  if (vkCreateShaderModule(logicalDevice, &createInfo, nullptr,
+                           &shaderModule) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create shader module!");
+  }
+  return shaderModule;
 }
 
 } // namespace VulkanHelper
