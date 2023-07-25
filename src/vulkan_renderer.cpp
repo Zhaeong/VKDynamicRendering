@@ -44,7 +44,7 @@ VulkanRenderer::~VulkanRenderer() {
 void VulkanRenderer::createInstance() {
 
   if (mEnableValidationLayers &&
-      !VulkanInit::iCheckValidationLayerSupport(mValidationLayers)) {
+      !VulkanHelper::iCheckValidationLayerSupport(mValidationLayers)) {
     throw std::runtime_error("Validation Layer requested but not available\n");
   } else if (mEnableValidationLayers) {
     std::cout << "Enabling Validation Layers\n";
@@ -53,7 +53,7 @@ void VulkanRenderer::createInstance() {
   }
 
   std::vector<const char *> requiredVkExtenstionsForSDL =
-      VulkanInit::iGetRequiredVkExtensions(mWindow);
+      VulkanHelper::iGetRequiredVkExtensions(mWindow);
 
   VkApplicationInfo appInfo = VulkanInit::application_info();
 
@@ -88,8 +88,8 @@ void VulkanRenderer::pickPhysicalDevice() {
 
   for (int i = 0; i < vPhysicalDevices.size(); i++) {
     std::cout << "Device Index: " << i << "\n";
-    if (VulkanInit::iIsDeviceSuitable(vPhysicalDevices[i], mSurface,
-                                      mDeviceExtensions)) {
+    if (VulkanHelper::iIsDeviceSuitable(vPhysicalDevices[i], mSurface,
+                                        mDeviceExtensions)) {
       mPhysicalDevice = vPhysicalDevices[i];
       break;
     }
@@ -111,7 +111,7 @@ void VulkanRenderer::createLogicalDevice() {
 
   // Specifying queues to be created
   Utils::QueueFamilyIndices indices =
-      VulkanInit::iFindQueueFamilies(mPhysicalDevice, mSurface);
+      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, mSurface);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
@@ -172,7 +172,7 @@ void VulkanRenderer::createLogicalDevice() {
 
 void VulkanRenderer::createCommandPool() {
   Utils::QueueFamilyIndices queueFamilyIndices =
-      VulkanInit::iFindQueueFamilies(mPhysicalDevice, mSurface);
+      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, mSurface);
 
   VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -227,14 +227,14 @@ void VulkanRenderer::createSyncObjects(uint32_t number) {
 
 void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   Utils::SwapChainSupportDetails swapChainSupport =
-      VulkanInit::iQuerySwapChainSupport(mPhysicalDevice, surface);
+      VulkanHelper::iQuerySwapChainSupport(mPhysicalDevice, surface);
 
   VkSurfaceFormatKHR surfaceFormat =
-      VulkanInit::iChooseSwapSurfaceFormat(swapChainSupport.formats);
+      VulkanHelper::iChooseSwapSurfaceFormat(swapChainSupport.formats);
   VkPresentModeKHR presentMode =
-      VulkanInit::iChooseSwapPresentMode(swapChainSupport.presentModes);
+      VulkanHelper::iChooseSwapPresentMode(swapChainSupport.presentModes);
   VkExtent2D extent =
-      VulkanInit::iChooseSwapExtent(mWindow, swapChainSupport.capabilities);
+      VulkanHelper::iChooseSwapExtent(mWindow, swapChainSupport.capabilities);
 
   // minimum + 1, and don't go over maximum
   mSwapChainImageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -269,7 +269,7 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   Utils::QueueFamilyIndices indices =
-      VulkanInit::iFindQueueFamilies(mPhysicalDevice, surface);
+      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, surface);
   uint32_t queueFamilyIndices[] = {indices.graphicsFamily,
                                    indices.presentFamily};
 
@@ -309,7 +309,7 @@ void VulkanRenderer::createSwapChainImageViews() {
   std::cout << "swapchain Image View Format: " << mSwapChainImageFormat << "\n";
 
   for (size_t i = 0; i < mSwapChainImages.size(); i++) {
-    mSwapChainImageViews[i] = VulkanInit::createImageView(
+    mSwapChainImageViews[i] = VulkanHelper::createImageView(
         mLogicalDevice, mSwapChainImages[i], mSwapChainImageFormat,
         VK_IMAGE_ASPECT_COLOR_BIT);
   }

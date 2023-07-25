@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <vulkan/vulkan.h>
 
+#include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
 
 namespace VulkanEngine {
