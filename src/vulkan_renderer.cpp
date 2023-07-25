@@ -21,6 +21,12 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChainImageViews();
 }
 VulkanRenderer::~VulkanRenderer() {
+
+  for (auto imageView : mSwapChainImageViews) {
+    vkDestroyImageView(mLogicalDevice, imageView, nullptr);
+  }
+  vkDestroySwapchainKHR(mLogicalDevice, mSwapChain, nullptr);
+
   for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
     vkDestroySemaphore(mLogicalDevice, mRenderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(mLogicalDevice, mImageAvailableSemaphores[i], nullptr);
