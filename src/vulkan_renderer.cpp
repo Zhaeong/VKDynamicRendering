@@ -18,6 +18,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSyncObjects(MAX_FRAMES_IN_FLIGHT);
 
   createSwapChain();
+  createSwapChainImageViews();
 }
 VulkanRenderer::~VulkanRenderer() {
   for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
@@ -237,6 +238,73 @@ void VulkanRenderer::createSwapChain() {
   std::cout << "SwapChain Image count: " << mSwapChainImageCount << "\n";
   // VK_FORMAT_B8G8R8A8_SRGB = 50,
   std::cout << "SwapChain Image format: " << surfaceFormat.format << "\n";
+
+  VkSwapchainCreateInfoKHR createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  createInfo.surface = mSurface;
+  createInfo.minImageCount = mSwapChainImageCount;
+  createInfo.flags = VK_SWAPCHAIN_CREATE_MUTABLE_FORMAT_BIT_KHR;
+
+  VkImageFormatListCreateInfo formatList{};
+  formatList.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
+  std::vector formats = {VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB};
+  formatList.viewFormatCount = formats.size();
+  formatList.pViewFormats = formats.data();
+
+  createInfo.pNext = &formatList;
+
+  createInfo.imageFormat = surfaceFormat.format;
+
+  createInfo.imageColorSpace = surfaceFormat.colorSpace;
+  createInfo.imageExtent = extent;
+  createInfo.imageArrayLayers = 1;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+  Utils::QueueFamilyIndices indices =
+      VulkanInit::iFindQueueFamilies(mPhysicalDevice, mSurface);
+  uint32_t queueFamilyIndices[] = {indices.graphicsFamily,
+                                   indices.presentFamily};
+
+  if (indices.graphicsFamily != indices.presentFamily) {
+    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    createInfo.queueFamilyIndexCount = 2;
+    createInfo.pQueueFamilyIndices = queueFamilyIndices;
+  } else {
+    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.queueFamilyIndexCount = 0;     // Optional
+    createInfo.pQueueFamilyIndices = nullptr; // Optional
+  }
+
+  createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+  createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  createInfo.presentMode = presentMode;
+  createInfo.clipped = VK_TRUE;
+  createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+  if (vkCreateSwapchainKHR(mLogicalDevice, &createInfo, nullptr, &mSwapChain) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create swap chain!");
+  }
+
+  vkGetSwapchainImagesKHR(mLogicalDevice, mSwapChain, &mSwapChainImageCount,
+                          nullptr);
+  mSwapChainImages.resize(mSwapChainImageCount);
+  vkGetSwapchainImagesKHR(mLogicalDevice, mSwapChain, &mSwapChainImageCount,
+                          mSwapChainImages.data());
+  mSwapChainImageFormat = surfaceFormat.format;
+  mSwapChainExtent = extent;
+}
+
+void VulkanRenderer::createSwapChainImageViews() {
+  mSwapChainImageViews.resize(mSwapChainImages.size());
+
+  std::cout << "swapchain Image View Format: " << mSwapChainImageFormat << "\n";
+
+  for (size_t i = 0; i < mSwapChainImages.size(); i++) {
+    mSwapChainImageViews[i] = VulkanInit::createImageView(
+        mLogicalDevice, mSwapChainImages[i], mSwapChainImageFormat,
+        VK_IMAGE_ASPECT_COLOR_BIT);
+  }
 }
 
 } // namespace VulkanEngine
