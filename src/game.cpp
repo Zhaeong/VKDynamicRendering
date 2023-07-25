@@ -32,7 +32,7 @@ void Game::run() {
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
 
-    exit(0);
+    // exit(0);
 
     // SDL_Delay(10000);
     //   isRunning = false;

@@ -17,8 +17,10 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
   createSyncObjects(MAX_FRAMES_IN_FLIGHT);
 
-  createSwapChain();
+  createSwapChain(mSurface);
   createSwapChainImageViews();
+
+  createGraphicsPipeline();
 }
 VulkanRenderer::~VulkanRenderer() {
 
@@ -223,9 +225,9 @@ void VulkanRenderer::createSyncObjects(uint32_t number) {
   }
 }
 
-void VulkanRenderer::createSwapChain() {
+void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   Utils::SwapChainSupportDetails swapChainSupport =
-      VulkanInit::iQuerySwapChainSupport(mPhysicalDevice, mSurface);
+      VulkanInit::iQuerySwapChainSupport(mPhysicalDevice, surface);
 
   VkSurfaceFormatKHR surfaceFormat =
       VulkanInit::iChooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -247,7 +249,7 @@ void VulkanRenderer::createSwapChain() {
 
   VkSwapchainCreateInfoKHR createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = mSurface;
+  createInfo.surface = surface;
   createInfo.minImageCount = mSwapChainImageCount;
   createInfo.flags = VK_SWAPCHAIN_CREATE_MUTABLE_FORMAT_BIT_KHR;
 
@@ -267,7 +269,7 @@ void VulkanRenderer::createSwapChain() {
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   Utils::QueueFamilyIndices indices =
-      VulkanInit::iFindQueueFamilies(mPhysicalDevice, mSurface);
+      VulkanInit::iFindQueueFamilies(mPhysicalDevice, surface);
   uint32_t queueFamilyIndices[] = {indices.graphicsFamily,
                                    indices.presentFamily};
 
@@ -312,5 +314,7 @@ void VulkanRenderer::createSwapChainImageViews() {
         VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
+
+void VulkanRenderer::createGraphicsPipeline() {}
 
 } // namespace VulkanEngine

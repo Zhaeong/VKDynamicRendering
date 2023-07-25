@@ -54,6 +54,10 @@ public:
   std::vector<VkImageView> mSwapChainImageViews;
 
   //===================================================
+  // Pipeline
+  VkPipelineLayout mPipelineLayout;
+  VkPipeline mGraphicsPipeline;
+  //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);
   ~VulkanRenderer();
@@ -69,7 +73,10 @@ public:
   void createSyncObjects(uint32_t number);
 
   // Swapchain
-  void createSwapChain();
+  void createSwapChain(VkSurfaceKHR surface);
   void createSwapChainImageViews();
+
+  // Pipeline
+  void createGraphicsPipeline();
 };
 } // namespace VulkanEngine
