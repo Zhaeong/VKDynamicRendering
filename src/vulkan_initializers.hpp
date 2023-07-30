@@ -131,4 +131,26 @@ inline VkDescriptorSetLayout create_descriptorSetLayout(VkDevice device) {
 
   return descriptorSetLayout;
 }
+
+inline VkBufferCreateInfo buffer_create_info(VkBufferUsageFlags usage,
+                                             VkDeviceSize size) {
+  VkBufferCreateInfo buffer_create_info{};
+  buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_create_info.usage = usage;
+  buffer_create_info.size = size;
+  return buffer_create_info;
+}
+
+inline VkMemoryAllocateInfo memory_allocate_info() {
+  VkMemoryAllocateInfo memory_allocation{};
+  memory_allocation.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  return memory_allocation;
+}
+
+inline VkCommandBufferBeginInfo command_buffer_begin_info() {
+  VkCommandBufferBeginInfo cmdBufferBeginInfo{};
+  cmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  return cmdBufferBeginInfo;
+}
+
 } // namespace VulkanInit

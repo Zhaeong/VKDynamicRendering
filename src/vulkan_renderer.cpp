@@ -21,8 +21,32 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChainImageViews();
 
   createGraphicsPipeline();
+
+  // Creation of custom input objects into the graphics pipeline
+  std::vector<Utils::Vertex> vertices = {
+      {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+      {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+      {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+      {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+      {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+      {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+      {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+      {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
+
+  createVertexBuffer(vertices);
 }
 VulkanRenderer::~VulkanRenderer() {
+  vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
+
+  vkDestroyBuffer(mLogicalDevice, mIndexBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, mIndexBufferMemory, nullptr);
+
+  for (size_t i = 0; i < mUniformBuffers.size(); i++) {
+    vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
+    vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
+  }
 
   for (auto imageView : mSwapChainImageViews) {
     vkDestroyImageView(mLogicalDevice, imageView, nullptr);
@@ -562,6 +586,35 @@ void VulkanRenderer::createGraphicsPipeline() {
   vkDestroyShaderModule(mLogicalDevice, fragShaderModule, nullptr);
   vkDestroyShaderModule(mLogicalDevice, vertShaderModule, nullptr);
   //================================================================================================
+}
+
+void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
+
+  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+  // Create a staging buffer as source for cpu accessible then copy over to
+  // actual bufffer
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingBufferMemory;
+  VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                             stagingBuffer, stagingBufferMemory);
+
+  void *data;
+  vkMapMemory(mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, vertices.data(), (size_t)bufferSize);
+  vkUnmapMemory(mLogicalDevice, stagingBufferMemory);
+
+  VulkanHelper::createBuffer(
+      mPhysicalDevice, mLogicalDevice, bufferSize,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
+
+  VulkanHelper::copyBuffer(mLogicalDevice, mCommandPool, mGraphicsQueue,
+                           stagingBuffer, mVertexBuffer, bufferSize);
+  vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
 
 } // namespace VulkanEngine

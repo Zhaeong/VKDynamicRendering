@@ -8,6 +8,7 @@
 #include <utils.hpp>
 #include <vector>
 #include <vulkan/vulkan.h>
+#include <vulkan_initializers.hpp>
 
 namespace VulkanHelper {
 
@@ -354,6 +355,116 @@ inline VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice,
     }
   }
   throw std::runtime_error("failed to find supported format!");
+}
+
+inline uint32_t findMemoryType(VkPhysicalDevice physicalDevice,
+                               uint32_t typeFilter,
+                               VkMemoryPropertyFlags properties) {
+  VkPhysicalDeviceMemoryProperties memProperties;
+
+  vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+    // typeFiler specifies the bit field of memory types that are suitable
+    // can find index of suitable memory by iterating over all memoryTypes and
+    // checking if the bit is set to 1
+
+    // need to also look at special features of the memory, like being able to
+    // map so we can write to it from CPU so look for a bitwise match
+
+    if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags &
+                                  properties) == properties) {
+      return i;
+    }
+  }
+  throw std::runtime_error("Failed to find memory type!");
+}
+
+inline void createBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
+                         VkDeviceSize size, VkBufferUsageFlags usage,
+                         VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                         VkDeviceMemory &bufferMemory) {
+
+  VkBufferCreateInfo bufferInfo = VulkanInit::buffer_create_info(usage, size);
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create vertex buffer!");
+  }
+
+  // After this buffer has been created, but doesn't have memory inside
+  // First step of allocating memory to buffer requires querying its memory
+  // requirements
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = VulkanInit::memory_allocate_info();
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = findMemoryType(
+      physicalDevice, memRequirements.memoryTypeBits, properties);
+
+  if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate vertex buffer memory!");
+  }
+  vkBindBufferMemory(device, buffer, bufferMemory, 0);
+}
+
+inline VkCommandBuffer beginSingleTimeCommands(VkDevice device,
+                                               VkCommandPool commandPool) {
+  // First need to allocate a temporary command buffer
+  //  Can create seperate command pool, but maybe at another time
+
+  VkCommandBufferAllocateInfo allocInfo =
+      VulkanInit::command_buffer_allocate_info(
+          commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
+
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+  // Begin recording to command buffer
+  VkCommandBufferBeginInfo beginInfo = VulkanInit::command_buffer_begin_info();
+
+  // telling driver about our onetime usage
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+  return commandBuffer;
+}
+
+inline void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool,
+                                  VkCommandBuffer commandBuffer,
+                                  VkQueue submitQueue) {
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer!");
+  }
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(submitQueue);
+
+  vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+inline void copyBuffer(VkDevice device, VkCommandPool commandPool,
+                       VkQueue submitQueue, VkBuffer srcBuffer,
+                       VkBuffer dstBuffer, VkDeviceSize size) {
+
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+  VkBufferCopy copyRegion{};
+  copyRegion.srcOffset = 0; // Optional
+  copyRegion.dstOffset = 0; // Optional
+  copyRegion.size = size;
+  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+  endSingleTimeCommands(device, commandPool, commandBuffer, submitQueue);
 }
 
 } // namespace VulkanHelper
