@@ -16,9 +16,9 @@ struct SwapChainSupportDetails {
 };
 
 struct Vertex {
-  glm::vec3 pos;
+  glm::vec2 pos;
   glm::vec3 color;
-  glm::vec2 texCoord;
+  // glm::vec2 texCoord;
 
   static VkVertexInputBindingDescription getBindingDescription() {
     VkVertexInputBindingDescription bindingDescription{};
@@ -32,11 +32,11 @@ struct Vertex {
   static std::vector<VkVertexInputAttributeDescription>
   getAttributeDescriptions() {
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-    attributeDescriptions.resize(3);
+    attributeDescriptions.resize(2);
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
     attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
@@ -44,10 +44,10 @@ struct Vertex {
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[1].offset = offsetof(Vertex, color);
 
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+    // attributeDescriptions[2].binding = 0;
+    // attributeDescriptions[2].location = 2;
+    // attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    // attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
     return attributeDescriptions;
   }

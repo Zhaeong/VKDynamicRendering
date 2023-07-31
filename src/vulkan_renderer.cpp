@@ -23,16 +23,20 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createGraphicsPipeline();
 
   // Creation of custom input objects into the graphics pipeline
-  std::vector<Utils::Vertex> vertices = {
-      {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-      {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-      {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-      {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+  // std::vector<Utils::Vertex> vertices = {
+  //     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+  //     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+  //     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+  //     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
 
-      {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-      {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-      {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-      {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
+  //     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+  //     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+  //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+  //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}};
+
+  std::vector<Utils::Vertex> vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+                                         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
 
   createVertexBuffer(vertices);
 }
@@ -450,7 +454,7 @@ void VulkanRenderer::createGraphicsPipeline() {
   rasterizer.lineWidth = 1.0f;
 
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
   rasterizer.depthBiasEnable = VK_FALSE;
   rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -563,13 +567,15 @@ void VulkanRenderer::createGraphicsPipeline() {
   pipeline_rendering_create_info.pColorAttachmentFormats =
       &mSwapChainImageFormat;
 
-  pipeline_rendering_create_info.depthAttachmentFormat =
-      VulkanHelper::findSupportedFormat(
-          mPhysicalDevice,
-          {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-           VK_FORMAT_D24_UNORM_S8_UINT},
-          VK_IMAGE_TILING_OPTIMAL,
-          VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+  // pipeline_rendering_create_info.depthAttachmentFormat =
+  //     VulkanHelper::findSupportedFormat(
+  //         mPhysicalDevice,
+  //         {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+  //          VK_FORMAT_D24_UNORM_S8_UINT},
+  //         VK_IMAGE_TILING_OPTIMAL,
+  //         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+  pipeline_rendering_create_info.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
   pipeline_rendering_create_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 
@@ -589,6 +595,8 @@ void VulkanRenderer::createGraphicsPipeline() {
 }
 
 void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
+
+  mVertices = vertices;
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
   // Create a staging buffer as source for cpu accessible then copy over to
@@ -615,6 +623,128 @@ void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
                            stagingBuffer, mVertexBuffer, bufferSize);
   vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
+}
+
+void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
+                                      VkPipeline graphicsPipeline,
+                                      std::vector<Utils::Vertex> vertices,
+                                      VkBuffer vertexBuffer) {
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline);
+
+  VkBuffer vertexBuffers[] = {vertexBuffer};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+  std::cout << "Drawing: " << vertices.size() << " Vertices\n";
+
+  vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+}
+
+void VulkanRenderer::drawFrame() {
+  vkWaitForFences(mLogicalDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE,
+                  UINT64_MAX);
+
+  VkResult result =
+      vkAcquireNextImageKHR(mLogicalDevice, mSwapChain, UINT64_MAX,
+                            mImageAvailableSemaphores[mCurrentFrame],
+                            VK_NULL_HANDLE, &mCurrentSwapChainImage);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    std::cout << "Recreating Swapchain\n";
+    // recreateSwapChain();
+    return;
+  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("failed to acquire swap chain image!");
+  }
+
+  vkResetFences(mLogicalDevice, 1, &mInFlightFences[mCurrentFrame]);
+
+  VulkanHelper::beginDrawingCommandBuffer(mCommandBuffers[mCurrentFrame]);
+
+  VulkanHelper::transitionImageLayout(
+      mLogicalDevice, mCommandPool, mGraphicsQueue,
+      mSwapChainImages[mCurrentSwapChainImage], mSwapChainImageFormat,
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+  // Normally renderpass, use renderinginfo for dynamic rendering
+  VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
+  renderingColorAttachmentInfo.sType =
+      VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  renderingColorAttachmentInfo.imageView =
+      mSwapChainImageViews[mCurrentSwapChainImage];
+  renderingColorAttachmentInfo.imageLayout =
+      VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+  renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+  renderingColorAttachmentInfo.clearValue = clearColor;
+
+  VkRenderingInfoKHR renderingInfo{};
+  renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+  renderingInfo.renderArea.offset = {0, 0};
+  renderingInfo.renderArea.extent = mSwapChainExtent;
+  renderingInfo.layerCount = 1;
+  renderingInfo.colorAttachmentCount = 1;
+  renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
+  // dynamic rendering end
+  //===============================================================
+
+  vkCmdBeginRendering(mCommandBuffers[mCurrentFrame], &renderingInfo);
+
+  drawFromVertices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
+                   mVertexBuffer);
+
+  vkCmdEndRendering(mCommandBuffers[mCurrentFrame]);
+
+  VulkanHelper::transitionImageLayout(
+      mLogicalDevice, mCommandPool, mGraphicsQueue,
+      mSwapChainImages[mCurrentSwapChainImage], mSwapChainImageFormat,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+  VulkanHelper::endDrawingCommandBuffer(
+      mCommandBuffers[mCurrentFrame], mGraphicsQueue,
+      mImageAvailableSemaphores[mCurrentFrame],
+      mRenderFinishedSemaphores[mCurrentFrame], mInFlightFences[mCurrentFrame]);
+
+  // Now present the image
+  VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
+
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {mSwapChain};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+  presentInfo.pImageIndices = &mCurrentSwapChainImage;
+
+  std::vector<VkResult> resultsArray;
+  resultsArray.resize(mSwapChainImageCount);
+
+  resultsArray[0] = VK_EVENT_SET;
+  resultsArray[1] = VK_EVENT_SET;
+  resultsArray[2] = VK_EVENT_SET;
+
+  // presentInfo.pResults = nullptr; // Optional
+  presentInfo.pResults = resultsArray.data(); // Optional
+  result = vkQueuePresentKHR(mPresentQueue, &presentInfo);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    std::cout << "Need to recreate swapchain\n";
+    // recreateSwapChain();
+  } else if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed to present swap chain image!");
+  }
+
+  for (int i = 0; i < resultsArray.size(); i++) {
+    std::cout << "curframe: " << mCurrentFrame << " Res:" << i
+              << " out: " << resultsArray[i] << "\n";
+  }
+
+  mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 } // namespace VulkanEngine

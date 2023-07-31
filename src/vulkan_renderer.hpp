@@ -37,6 +37,8 @@ public:
   //===================================================
   // Command Submission
   const int MAX_FRAMES_IN_FLIGHT = 2;
+  uint32_t mCurrentFrame = 0;
+  uint32_t mCurrentSwapChainImage;
 
   VkCommandPool mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
@@ -64,6 +66,8 @@ public:
   // This is set first as VK_NULL_HANDLE, since we initially want to destroy
   // buffer, and VK_NULL_HANDLE is valid for vkDestroyBuffer when buffer in
   // unitialized
+
+  std::vector<Utils::Vertex> mVertices;
   VkBuffer mVertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
 
@@ -97,5 +101,13 @@ public:
 
   // Pipeline inputs
   void createVertexBuffer(std::vector<Utils::Vertex> vertices);
+
+  // Rendering functionality
+  void drawFromVertices(VkCommandBuffer commandBuffer,
+                        VkPipeline graphicsPipeline,
+                        std::vector<Utils::Vertex> vertices,
+                        VkBuffer vertexBuffer);
+
+  void drawFrame();
 };
 } // namespace VulkanEngine

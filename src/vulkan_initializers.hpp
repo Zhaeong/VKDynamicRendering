@@ -153,4 +153,20 @@ inline VkCommandBufferBeginInfo command_buffer_begin_info() {
   return cmdBufferBeginInfo;
 }
 
+// inline VkImageMemoryBarrier image_memory_barrier(VkImageLayout oldLayout,
+//                                                  VkImageLayout newLayout,
+//                                                  VkImage image) {
+//   VkImageMemoryBarrier image_memory_barrier{};
+//   image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+//   image_memory_barrier.oldLayout = oldLayout;
+//   image_memory_barrier.newLayout = newLayout;
+//   image_memory_barrier.image = image;
+
+//   image_memory_barrier.subresourceRange.baseMipLevel = 0;
+//   image_memory_barrier.subresourceRange.levelCount = 1;
+//   image_memory_barrier.subresourceRange.baseArrayLayer = 0;
+//   image_memory_barrier.subresourceRange.layerCount = 1;
+//   return image_memory_barrier;
+// }
+
 } // namespace VulkanInit

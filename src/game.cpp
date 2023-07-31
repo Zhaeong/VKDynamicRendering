@@ -31,10 +31,9 @@ void Game::run() {
   while (isRunning) {
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
+    vulkanRenderer->drawFrame();
 
-    // exit(0);
-
-    // SDL_Delay(10000);
+    SDL_Delay(1000);
     //   isRunning = false;
   }
 }
