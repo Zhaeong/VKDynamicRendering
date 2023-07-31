@@ -567,15 +567,13 @@ void VulkanRenderer::createGraphicsPipeline() {
   pipeline_rendering_create_info.pColorAttachmentFormats =
       &mSwapChainImageFormat;
 
-  // pipeline_rendering_create_info.depthAttachmentFormat =
-  //     VulkanHelper::findSupportedFormat(
-  //         mPhysicalDevice,
-  //         {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-  //          VK_FORMAT_D24_UNORM_S8_UINT},
-  //         VK_IMAGE_TILING_OPTIMAL,
-  //         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
-  pipeline_rendering_create_info.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+  pipeline_rendering_create_info.depthAttachmentFormat =
+      VulkanHelper::findSupportedFormat(
+          mPhysicalDevice,
+          {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+           VK_FORMAT_D24_UNORM_S8_UINT},
+          VK_IMAGE_TILING_OPTIMAL,
+          VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
   pipeline_rendering_create_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 
