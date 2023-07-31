@@ -660,10 +660,19 @@ void VulkanRenderer::drawFrame() {
 
   VulkanHelper::beginDrawingCommandBuffer(mCommandBuffers[mCurrentFrame]);
 
-  VulkanHelper::transitionImageLayout(
-      mLogicalDevice, mCommandPool, mGraphicsQueue,
-      mSwapChainImages[mCurrentSwapChainImage], mSwapChainImageFormat,
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  VkImageSubresourceRange range{};
+  range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  range.baseMipLevel = 0;
+  range.levelCount = VK_REMAINING_MIP_LEVELS;
+  range.baseArrayLayer = 0;
+  range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+  VulkanInit::insert_image_memory_barrier(
+      mCommandBuffers[mCurrentFrame], mSwapChainImages[mCurrentSwapChainImage],
+      0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, range);
 
   // Normally renderpass, use renderinginfo for dynamic rendering
   VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
@@ -695,11 +704,12 @@ void VulkanRenderer::drawFrame() {
 
   vkCmdEndRendering(mCommandBuffers[mCurrentFrame]);
 
-  VulkanHelper::transitionImageLayout(
-      mLogicalDevice, mCommandPool, mGraphicsQueue,
-      mSwapChainImages[mCurrentSwapChainImage], mSwapChainImageFormat,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  VulkanInit::insert_image_memory_barrier(
+      mCommandBuffers[mCurrentFrame], mSwapChainImages[mCurrentSwapChainImage],
+      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, range);
 
   VulkanHelper::endDrawingCommandBuffer(
       mCommandBuffers[mCurrentFrame], mGraphicsQueue,
