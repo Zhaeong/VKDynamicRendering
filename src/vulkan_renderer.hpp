@@ -68,6 +68,7 @@ public:
   // unitialized
 
   std::vector<Utils::Vertex> mVertices;
+  std::vector<uint16_t> mIndices;
   VkBuffer mVertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
 
@@ -101,12 +102,19 @@ public:
 
   // Pipeline inputs
   void createVertexBuffer(std::vector<Utils::Vertex> vertices);
+  void createIndexBuffer(std::vector<uint16_t> indices);
 
   // Rendering functionality
   void drawFromVertices(VkCommandBuffer commandBuffer,
                         VkPipeline graphicsPipeline,
                         std::vector<Utils::Vertex> vertices,
                         VkBuffer vertexBuffer);
+
+  void drawFromIndices(VkCommandBuffer commandBuffer,
+                       VkPipeline graphicsPipeline,
+                       std::vector<Utils::Vertex> vertices,
+                       std::vector<uint16_t> indices, VkBuffer vertexBuffer,
+                       VkBuffer indexBuffer);
 
   void drawFrame();
 };

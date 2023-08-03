@@ -39,6 +39,8 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
                                          {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
 
   createVertexBuffer(vertices);
+  mIndices = {0, 1, 2};
+  createIndexBuffer(mIndices);
 }
 VulkanRenderer::~VulkanRenderer() {
   vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
@@ -623,6 +625,34 @@ void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
 
+void VulkanRenderer::createIndexBuffer(std::vector<uint16_t> indices) {
+  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingBufferMemory;
+  VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                             stagingBuffer, stagingBufferMemory);
+
+  void *data;
+  vkMapMemory(mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, indices.data(), (size_t)bufferSize);
+  vkUnmapMemory(mLogicalDevice, stagingBufferMemory);
+
+  VulkanHelper::createBuffer(
+      mPhysicalDevice, mLogicalDevice, bufferSize,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
+
+  VulkanHelper::copyBuffer(mLogicalDevice, mCommandPool, mGraphicsQueue,
+                           stagingBuffer, mIndexBuffer, bufferSize);
+
+  vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
+}
+
 void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
                                       VkPipeline graphicsPipeline,
                                       std::vector<Utils::Vertex> vertices,
@@ -637,6 +667,24 @@ void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
   std::cout << "Drawing: " << vertices.size() << " Vertices\n";
 
   vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+}
+
+void VulkanRenderer::drawFromIndices(VkCommandBuffer commandBuffer,
+                                     VkPipeline graphicsPipeline,
+                                     std::vector<Utils::Vertex> vertices,
+                                     std::vector<uint16_t> indices,
+                                     VkBuffer vertexBuffer,
+                                     VkBuffer indexBuffer) {
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline);
+
+  VkBuffer vertexBuffers[] = {vertexBuffer};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
+                   0, 0);
 }
 
 void VulkanRenderer::drawFrame() {
@@ -699,8 +747,12 @@ void VulkanRenderer::drawFrame() {
 
   vkCmdBeginRendering(mCommandBuffers[mCurrentFrame], &renderingInfo);
 
-  drawFromVertices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
-                   mVertexBuffer);
+  // drawFromVertices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline,
+  // mVertices,
+  //                  mVertexBuffer);
+
+  drawFromIndices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
+                  mIndices, mVertexBuffer, mIndexBuffer);
 
   vkCmdEndRendering(mCommandBuffers[mCurrentFrame]);
 
