@@ -18,7 +18,7 @@ public:
   VkInstance mInstance;
 
   // This needs to be false else other layers don't work
-  const bool mEnableValidationLayers = true;
+  const bool mEnableValidationLayers = false;
 
   VkSurfaceKHR mSurface;
 

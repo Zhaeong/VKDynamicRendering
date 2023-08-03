@@ -3,6 +3,17 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+/// @brief Helper macro to test the result of Vulkan calls which can return an
+/// error.
+#define VK_CHECK(x, s)                                                         \
+  do {                                                                         \
+    VkResult err = x;                                                          \
+    if (err) {                                                                 \
+      std::cout << "Detected Vulkan error: " << s << "\n";                     \
+      abort();                                                                 \
+    }                                                                          \
+  } while (0)
+
 namespace Utils {
 struct QueueFamilyIndices {
   uint32_t graphicsFamily;

@@ -99,9 +99,8 @@ void VulkanRenderer::createInstance() {
       appInfo, requiredVkExtenstionsForSDL.size(),
       requiredVkExtenstionsForSDL.data(), enabledLayerCount, enabledLayerNames);
 
-  if (vkCreateInstance(&createInfo, nullptr, &mInstance) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create instance!");
-  }
+  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &mInstance),
+           "vkCreateInstance");
 }
 
 void VulkanRenderer::pickPhysicalDevice() {
@@ -223,10 +222,8 @@ void VulkanRenderer::createCommandBuffers(uint32_t number) {
           mCommandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
           (uint32_t)mCommandBuffers.size());
 
-  if (vkAllocateCommandBuffers(mLogicalDevice, &allocInfo,
-                               mCommandBuffers.data()) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate command buffers!");
-  }
+  VK_CHECK(vkAllocateCommandBuffers(mLogicalDevice, &allocInfo, mCommandBuffers.data()),
+           "vkAllocateCommandBuffers");
 }
 
 void VulkanRenderer::createSyncObjects(uint32_t number) {
@@ -546,10 +543,8 @@ void VulkanRenderer::createGraphicsPipeline() {
   pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
   pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-  if (vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutInfo, nullptr,
-                             &mPipelineLayout) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create pipeline layout!");
-  }
+  VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout), 
+           "vkCreatePipelineLayout");
 
   PIPElineInfo.layout = mPipelineLayout;
   //================================================================================================
@@ -582,11 +577,8 @@ void VulkanRenderer::createGraphicsPipeline() {
   PIPElineInfo.pNext = &pipeline_rendering_create_info;
 
   //================================================================================================
-  if (vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1,
-                                &PIPElineInfo, nullptr,
-                                &mGraphicsPipeline) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create graphics pipeline!");
-  }
+  VK_CHECK(vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1, &PIPElineInfo, nullptr, &mGraphicsPipeline),
+           "vkCreateGraphicsPipelines");
 
   // Cleanup===========
   vkDestroyShaderModule(mLogicalDevice, fragShaderModule, nullptr);
