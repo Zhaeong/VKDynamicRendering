@@ -175,4 +175,40 @@ inline void insert_image_memory_barrier(
                        nullptr, 0, nullptr, 1, &barrier);
 }
 
+inline VkPipelineLayoutCreateInfo pipeline_layout_create_info(
+    const VkDescriptorSetLayout *set_layouts,
+    uint32_t                     set_layout_count = 1)
+{
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
+	pipeline_layout_create_info.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_create_info.setLayoutCount = set_layout_count;
+	pipeline_layout_create_info.pSetLayouts    = set_layouts;
+	return pipeline_layout_create_info;
+}
+
+inline VkDescriptorSetLayoutBinding descriptor_set_layout_binding(
+    VkDescriptorType   type,
+    VkShaderStageFlags flags,
+    uint32_t           binding,
+    uint32_t           count = 1)
+{
+	VkDescriptorSetLayoutBinding set_layout_binding{};
+	set_layout_binding.descriptorType  = type;
+	set_layout_binding.stageFlags      = flags;
+	set_layout_binding.binding         = binding;
+	set_layout_binding.descriptorCount = count;
+	return set_layout_binding;
+}
+
+inline VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
+    const VkDescriptorSetLayoutBinding *bindings,
+    uint32_t                            binding_count)
+{
+	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info{};
+	descriptor_set_layout_create_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptor_set_layout_create_info.pBindings    = bindings;
+	descriptor_set_layout_create_info.bindingCount = binding_count;
+	return descriptor_set_layout_create_info;
+}
+
 } // namespace VulkanInit

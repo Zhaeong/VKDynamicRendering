@@ -18,7 +18,7 @@ public:
   VkInstance mInstance;
 
   // This needs to be false else other layers don't work
-  const bool mEnableValidationLayers = false;
+  const bool mEnableValidationLayers = true;
 
   VkSurfaceKHR mSurface;
 
@@ -78,6 +78,10 @@ public:
   std::vector<VkBuffer> mUniformBuffers;
   std::vector<VkDeviceMemory> mUniformBuffersMemory;
 
+  VkDescriptorPool mDescriptorPool;
+  VkDescriptorSetLayout mDescriptorSetLayout{VK_NULL_HANDLE};
+  std::vector<VkDescriptorSet> mDescriptorSets;
+
   //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);
@@ -97,12 +101,16 @@ public:
   void createSwapChain(VkSurfaceKHR surface);
   void createSwapChainImageViews();
 
+  //DescriptorSetLayout, pipelineLayout
+  void setupDescriptorSetLayout();
   // Pipeline
   void createGraphicsPipeline();
 
   // Pipeline inputs
   void createVertexBuffer(std::vector<Utils::Vertex> vertices);
   void createIndexBuffer(std::vector<uint16_t> indices);
+  void createUniformBuffers(int number);
+  void createDescriptorPool(int number);
 
   // Rendering functionality
   void drawFromVertices(VkCommandBuffer commandBuffer,

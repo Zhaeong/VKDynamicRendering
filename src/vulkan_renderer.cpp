@@ -20,6 +20,9 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChain(mSurface);
   createSwapChainImageViews();
 
+  //Required for pipeline layout before creation of graphics pipeline
+  setupDescriptorSetLayout();
+
   createGraphicsPipeline();
 
   // Creation of custom input objects into the graphics pipeline
@@ -41,6 +44,9 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createVertexBuffer(vertices);
   mIndices = {0, 1, 2};
   createIndexBuffer(mIndices);
+
+  createUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+  createDescriptorPool(MAX_FRAMES_IN_FLIGHT);
 }
 VulkanRenderer::~VulkanRenderer() {
   vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
@@ -529,22 +535,22 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pipelineLayout
   //================================================================================================
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  // VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  // pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-  // Descriptor set layouts
-  pipelineLayoutInfo.setLayoutCount = 1; // Optional
+  // // Descriptor set layouts
+  // pipelineLayoutInfo.setLayoutCount = 1; // Optional
 
-  VkDescriptorSetLayout descriptorSetLayout =
-      VulkanInit::create_descriptorSetLayout(mLogicalDevice);
-  pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; // Optional
+  // VkDescriptorSetLayout descriptorSetLayout =
+  //     VulkanInit::create_descriptorSetLayout(mLogicalDevice);
+  // pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; // Optional
 
-  // Push constants
-  pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
-  pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+  // // Push constants
+  // pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
+  // pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-  VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout), 
-           "vkCreatePipelineLayout");
+  // VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout), 
+  //          "vkCreatePipelineLayout");
 
   PIPElineInfo.layout = mPipelineLayout;
   //================================================================================================
@@ -644,6 +650,70 @@ void VulkanRenderer::createIndexBuffer(std::vector<uint16_t> indices) {
   vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
+
+void VulkanRenderer::createUniformBuffers(int number) {
+  VkDeviceSize bufferSize = sizeof(Utils::UniformBufferObject);
+
+  mUniformBuffers.resize(number);
+  mUniformBuffersMemory.resize(number);
+
+  for (size_t i = 0; i < number; i++) {
+    VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        mUniformBuffers[i], mUniformBuffersMemory[i]);
+  }
+
+}
+
+void VulkanRenderer::createDescriptorPool(int number) {
+
+  std::vector<VkDescriptorPoolSize> poolSizes{};
+
+  VkDescriptorPoolSize poolSizeUBO{};
+  poolSizeUBO.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizeUBO.descriptorCount = static_cast<uint32_t>(number);
+  poolSizes.push_back(poolSizeUBO);
+
+  // VkDescriptorPoolSize poolSizeIMGSampler{};
+  // poolSizeIMGSampler.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  // poolSizeIMGSampler.descriptorCount = static_cast<uint32_t>(number);
+  // poolSizes.push_back(poolSizeIMGSampler);
+
+  VkDescriptorPoolCreateInfo poolInfo{};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+  poolInfo.pPoolSizes = poolSizes.data();
+
+  poolInfo.maxSets = static_cast<uint32_t>(number);
+  if (vkCreateDescriptorPool(mLogicalDevice, &poolInfo, nullptr, &mDescriptorPool) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create descriptor pool!");
+  }
+
+}
+
+void VulkanRenderer::setupDescriptorSetLayout()
+{
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+      //VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
+	    VulkanInit::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+
+	VK_CHECK(vkCreateDescriptorSetLayout(mLogicalDevice, &descriptor_layout_create_info, nullptr, &mDescriptorSetLayout), "vkCreateDescriptorSetLayout");
+
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
+	    VulkanInit::pipeline_layout_create_info(
+	        &mDescriptorSetLayout,
+	        1);
+
+	VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipeline_layout_create_info, nullptr, &mPipelineLayout), "vkCreatePipelineLayout");
+}
+
 
 void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
                                       VkPipeline graphicsPipeline,
