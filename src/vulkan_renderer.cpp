@@ -744,6 +744,39 @@ void VulkanRenderer::createDescriptorSets(int number)
   }
 }
 
+void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
+  
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                   currentTime - startTime)
+                   .count();
+
+
+  Utils::UniformBufferObject ubo{};
+  ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f) * time,
+                          glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.view =
+      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, 1.0f));
+
+  ubo.proj = glm::perspective(glm::radians(45.0f),
+                              mSwapChainExtent.width /
+                                  (float)mSwapChainExtent.height,
+                              0.1f, 10.0f);
+
+  //ubo.proj[1][1] *= -1;
+
+  void *data;
+  vkMapMemory(mLogicalDevice,
+              mUniformBuffersMemory[currentImage], 0, sizeof(ubo),
+              0, &data);
+  memcpy(data, &ubo, sizeof(ubo));
+  vkUnmapMemory(mLogicalDevice,
+                mUniformBuffersMemory[currentImage]);
+}
+
 
 void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
                                       VkPipeline graphicsPipeline,
@@ -777,6 +810,34 @@ void VulkanRenderer::drawFromIndices(VkCommandBuffer commandBuffer,
 
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
                    0, 0);
+}
+
+
+void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
+                                         int imageIndex, VkPipeline graphicsPipeline,
+                                         std::vector<Utils::Vertex> vertices,
+                                         std::vector<uint16_t> indices,
+                                         VkBuffer vertexBuffer,
+                                         VkBuffer indexBuffer) {
+
+  updateUniformBuffer(imageIndex);
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline);
+
+  VkBuffer vertexBuffers[] = {vertexBuffer};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
+                       VK_INDEX_TYPE_UINT16);
+
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          mPipelineLayout, 0, 1,
+                          &mDescriptorSets[imageIndex], 0,
+                          nullptr);
+
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
+                   0, 0);
+
 }
 
 void VulkanRenderer::drawFrame() {
@@ -843,7 +904,11 @@ void VulkanRenderer::drawFrame() {
   // mVertices,
   //                  mVertexBuffer);
 
-  drawFromIndices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
+  // drawFromIndices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
+  //                 mIndices, mVertexBuffer, mIndexBuffer);
+
+
+  drawFromDescriptors(mCommandBuffers[mCurrentFrame], mCurrentFrame, mGraphicsPipeline, mVertices,
                   mIndices, mVertexBuffer, mIndexBuffer);
 
   vkCmdEndRendering(mCommandBuffers[mCurrentFrame]);

@@ -6,6 +6,11 @@
 #include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
+
 namespace VulkanEngine {
 
 class VulkanRenderer {
@@ -114,6 +119,9 @@ public:
   void createDescriptorSets(int number);
 
   // Rendering functionality
+
+  void updateUniformBuffer(uint32_t currentImage);
+
   void drawFromVertices(VkCommandBuffer commandBuffer,
                         VkPipeline graphicsPipeline,
                         std::vector<Utils::Vertex> vertices,
@@ -124,6 +132,13 @@ public:
                        std::vector<Utils::Vertex> vertices,
                        std::vector<uint16_t> indices, VkBuffer vertexBuffer,
                        VkBuffer indexBuffer);
+
+  void drawFromDescriptors(VkCommandBuffer commandBuffer,
+                           int imageIndex, VkPipeline graphicsPipeline,
+                           std::vector<Utils::Vertex> vertices,
+                           std::vector<uint16_t> indices,
+                           VkBuffer vertexBuffer,
+                           VkBuffer indexBuffer);
 
   void drawFrame();
 };
