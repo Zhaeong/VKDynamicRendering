@@ -37,9 +37,9 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
   //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}};
 
-  std::vector<Utils::Vertex> vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                                         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+  std::vector<Utils::Vertex> vertices = {{{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+                                         {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+                                         {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
   createVertexBuffer(vertices);
   mIndices = {0, 1, 2};
@@ -47,6 +47,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   createUniformBuffers(MAX_FRAMES_IN_FLIGHT);
   createDescriptorPool(MAX_FRAMES_IN_FLIGHT);
+  createDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 }
 VulkanRenderer::~VulkanRenderer() {
   vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
@@ -712,6 +713,35 @@ void VulkanRenderer::setupDescriptorSetLayout()
 	        1);
 
 	VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipeline_layout_create_info, nullptr, &mPipelineLayout), "vkCreatePipelineLayout");
+}
+
+void VulkanRenderer::createDescriptorSets(int number)
+{
+  mDescriptorSets.resize(number);
+
+  //The layouts array must equal to the number of descriptor sets you want to allocate
+  std::vector<VkDescriptorSetLayout> layoutsArray;
+  for (size_t i = 0; i < number; i++) {
+    layoutsArray.push_back(mDescriptorSetLayout);
+  }
+
+	VkDescriptorSetAllocateInfo alloc_info =
+	    VulkanInit::descriptor_set_allocate_info(
+	        mDescriptorPool,
+	        layoutsArray.data(),
+	        number);
+
+	VK_CHECK(vkAllocateDescriptorSets(mLogicalDevice, &alloc_info, mDescriptorSets.data()), "vkAllocateDescriptorSets");
+
+  for (size_t i = 0; i < number; i++) {
+    VkDescriptorBufferInfo            matrix_buffer_descriptor     = VulkanInit::create_descriptor_buffer(mUniformBuffers[i], sizeof(Utils::UniformBufferObject), 0);
+    //VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.envmap);
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
+          VulkanInit::write_descriptor_set(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+          //VulkanInit::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+      };
+    vkUpdateDescriptorSets(mLogicalDevice, static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+  }
 }
 
 

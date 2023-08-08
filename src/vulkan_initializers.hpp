@@ -211,4 +211,43 @@ inline VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
 	return descriptor_set_layout_create_info;
 }
 
+inline VkDescriptorSetAllocateInfo descriptor_set_allocate_info(
+    VkDescriptorPool             descriptor_pool,
+    const VkDescriptorSetLayout *set_layouts,
+    uint32_t                     descriptor_set_count)
+{
+	VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
+	descriptor_set_allocate_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptor_set_allocate_info.descriptorPool     = descriptor_pool;
+	descriptor_set_allocate_info.pSetLayouts        = set_layouts;
+	descriptor_set_allocate_info.descriptorSetCount = descriptor_set_count;
+	return descriptor_set_allocate_info;
+}
+
+inline VkDescriptorBufferInfo create_descriptor_buffer(VkBuffer buffer, VkDeviceSize size, VkDeviceSize offset)
+{
+	VkDescriptorBufferInfo descriptor{};
+	descriptor.buffer = buffer;
+	descriptor.range  = size;
+	descriptor.offset = offset;
+	return descriptor;
+}
+
+inline VkWriteDescriptorSet write_descriptor_set(
+    VkDescriptorSet         dst_set,
+    VkDescriptorType        type,
+    uint32_t                binding,
+    VkDescriptorBufferInfo *buffer_info,
+    uint32_t                descriptor_count = 1)
+{
+	VkWriteDescriptorSet write_descriptor_set{};
+	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write_descriptor_set.dstSet          = dst_set;
+	write_descriptor_set.descriptorType  = type;
+	write_descriptor_set.dstBinding      = binding;
+	write_descriptor_set.pBufferInfo     = buffer_info;
+	write_descriptor_set.descriptorCount = descriptor_count;
+	return write_descriptor_set;
+}
+
 } // namespace VulkanInit
