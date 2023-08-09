@@ -9,6 +9,12 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <vulkan_initializers.hpp>
+#include <cstring>
+
+// for loading stb image function objs
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_STATIC
+#include <stb_image.h>
 
 namespace VulkanHelper {
 
@@ -389,7 +395,7 @@ inline void createBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create vertex buffer!");
+    throw std::runtime_error("failed to create buffer!");
   }
 
   // After this buffer has been created, but doesn't have memory inside
@@ -405,7 +411,7 @@ inline void createBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
 
   if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) !=
       VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate vertex buffer memory!");
+    throw std::runtime_error("failed to allocate buffer memory!");
   }
   vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
@@ -446,7 +452,20 @@ inline void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool,
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
 
-  vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	VkFenceCreateInfo fence_info{};
+	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fence_info.flags = VK_FLAGS_NONE;
+
+  VkFence fence;
+	VK_CHECK(vkCreateFence(device, &fence_info, nullptr, &fence), "vkCreateFence");
+
+  vkQueueSubmit(submitQueue, 1, &submitInfo, fence);
+
+  // Wait for the fence to signal that command buffer has finished executing
+	VK_CHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT), "vkWaitForFences");
+
+  vkDestroyFence(device, fence, nullptr);
+
   vkQueueWaitIdle(submitQueue);
 
   vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
@@ -605,6 +624,161 @@ inline void transitionImageLayout(VkDevice device, VkCommandPool commandPool,
   vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
                        nullptr, 0, nullptr, 1, &barrier);
   endSingleTimeCommands(device, commandPool, commandBuffer, submitQueue);
+}
+
+// Utils::Texture loadTexture(const char *texPath, VkFormat format,
+//                            VkPhysicalDevice physicalDevice, VkDevice device,
+//                            VkCommandPool commandPool, VkQueue submitQueue);
+
+inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
+                        VkPhysicalDevice physicalDevice,
+                        VkDevice device, 
+                        VkCommandPool commandPool,
+                        VkQueue submitQueue) {
+  Utils::Texture texture{};
+
+  int texWidth, texHeight, texChannels;
+  stbi_uc *pixels = stbi_load(texPath, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+  VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+  if (!pixels) {
+    throw std::runtime_error("failed to load texture image!");
+  }
+
+  texture.height = texHeight;
+  texture.width = texWidth;
+  texture.mip_levels = 1;
+
+  // Now copy raw image data to an optimal tiled image
+  // This loads the texture data into a host local buffer that is copied to the optimal tiled image on the device
+
+  // Create a host-visible staging buffer that contains the raw image data
+  // This buffer will be the data source for copying texture data to the optimal tiled image on the device
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingBufferMemory;
+
+  createBuffer(physicalDevice, device, imageSize,
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               stagingBuffer, stagingBufferMemory);
+  void *data;
+  vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+  memcpy(data, pixels, static_cast<size_t>(imageSize));
+  vkUnmapMemory(device, stagingBufferMemory);
+
+  stbi_image_free(pixels);
+
+  // Create optimal tiled target image on the device
+	VkImageCreateInfo image_create_info = VulkanInit::image_create_info();
+	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
+	image_create_info.format            = format;
+	image_create_info.mipLevels         = texture.mip_levels;
+	image_create_info.arrayLayers       = 1;
+	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+	// Set initial layout of the image to undefined
+	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.extent        = {texture.width, texture.height, 1};
+	image_create_info.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	VK_CHECK(vkCreateImage(device, &image_create_info, nullptr, &texture.image), "vkCreateImage");
+
+  VkMemoryAllocateInfo memory_allocate_info = VulkanInit::memory_allocate_info();
+  VkMemoryRequirements memory_requirements  = {};
+  vkGetImageMemoryRequirements(device, texture.image, &memory_requirements);
+	memory_allocate_info.allocationSize  = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex = findMemoryType(physicalDevice, 
+                                                        memory_requirements.memoryTypeBits, 
+                                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(device, &memory_allocate_info, nullptr, &texture.device_memory), "vkAllocateMemory");
+	VK_CHECK(vkBindImageMemory(device, texture.image, texture.device_memory, 0), "vkBindImageMemory");
+
+
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+  //Now transition image layout from VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+
+  // The sub resource range describes the regions of the image that will be transitioned using the memory barriers below
+	VkImageSubresourceRange subresource_range = {};
+	// Image only contains color data
+	subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	// Start at first mip level
+	subresource_range.baseMipLevel = 0;
+	// We will transition on all mip levels
+	subresource_range.levelCount = texture.mip_levels;
+	// The 2D texture only has one layer
+	subresource_range.layerCount = 1;
+
+
+  // Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
+	VkImageMemoryBarrier image_memory_barrier = VulkanInit::image_memory_barrier();
+
+	image_memory_barrier.image            = texture.image;
+	image_memory_barrier.subresourceRange = subresource_range;
+	image_memory_barrier.srcAccessMask    = 0;
+	image_memory_barrier.dstAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
+	// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
+	// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
+	vkCmdPipelineBarrier(
+	    commandBuffer,
+	    VK_PIPELINE_STAGE_HOST_BIT,
+	    VK_PIPELINE_STAGE_TRANSFER_BIT,
+	    0,
+	    0, nullptr,
+	    0, nullptr,
+	    1, &image_memory_barrier);
+
+  VkBufferImageCopy buffer_copy_region               = {};
+			buffer_copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			buffer_copy_region.imageSubresource.mipLevel       = 0;
+			buffer_copy_region.imageSubresource.baseArrayLayer = 0;
+			buffer_copy_region.imageSubresource.layerCount     = 1;
+			buffer_copy_region.imageExtent.width               = texture.width;
+			buffer_copy_region.imageExtent.height              = texture.height;
+			buffer_copy_region.imageExtent.depth               = 1;
+			buffer_copy_region.bufferOffset                    = 0;
+
+  vkCmdCopyBufferToImage(
+		    commandBuffer,
+		    stagingBuffer,
+		    texture.image,
+		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		    1,
+		    &buffer_copy_region);
+
+  // Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
+	image_memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	image_memory_barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	image_memory_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
+	// Source pipeline stage stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
+	// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+	vkCmdPipelineBarrier(
+		    commandBuffer,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
+		    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		    0,
+		    0, nullptr,
+		    0, nullptr,
+		    1, &image_memory_barrier);
+  
+  // Store current layout for later reuse
+	texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  endSingleTimeCommands(device, commandPool, commandBuffer, submitQueue);
+
+  // Clean up staging resources
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+
+  return texture;
 }
 
 } // namespace VulkanHelper

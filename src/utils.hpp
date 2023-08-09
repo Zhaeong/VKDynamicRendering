@@ -14,6 +14,10 @@
     }                                                                          \
   } while (0)
 
+#define VK_FLAGS_NONE 0        // Custom define for better code readability
+
+#define DEFAULT_FENCE_TIMEOUT 100000000000        // Default fence timeout in nanoseconds
+
 namespace Utils {
 struct QueueFamilyIndices {
   uint32_t graphicsFamily;

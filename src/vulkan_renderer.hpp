@@ -83,6 +83,8 @@ public:
   std::vector<VkBuffer> mUniformBuffers;
   std::vector<VkDeviceMemory> mUniformBuffersMemory;
 
+  std::vector<Utils::Texture> mTextures;
+
   VkDescriptorPool mDescriptorPool;
   VkDescriptorSetLayout mDescriptorSetLayout{VK_NULL_HANDLE};
   std::vector<VkDescriptorSet> mDescriptorSets;
@@ -115,6 +117,9 @@ public:
   void createVertexBuffer(std::vector<Utils::Vertex> vertices);
   void createIndexBuffer(std::vector<uint16_t> indices);
   void createUniformBuffers(int number);
+
+  void loadTextures();
+  
   void createDescriptorPool(int number);
   void createDescriptorSets(int number);
 

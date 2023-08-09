@@ -250,4 +250,21 @@ inline VkWriteDescriptorSet write_descriptor_set(
 	return write_descriptor_set;
 }
 
+inline VkImageCreateInfo image_create_info()
+{
+	VkImageCreateInfo image_create_info{};
+	image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	return image_create_info;
+}
+
+/** @brief Initialize an image memory barrier with no image transfer ownership */
+inline VkImageMemoryBarrier image_memory_barrier()
+{
+	VkImageMemoryBarrier image_memory_barrier{};
+	image_memory_barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	return image_memory_barrier;
+}
+
 } // namespace VulkanInit

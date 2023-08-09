@@ -45,6 +45,8 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   mIndices = {0, 1, 2};
   createIndexBuffer(mIndices);
 
+  loadTextures();
+
   createUniformBuffers(MAX_FRAMES_IN_FLIGHT);
   createDescriptorPool(MAX_FRAMES_IN_FLIGHT);
   createDescriptorSets(MAX_FRAMES_IN_FLIGHT);
@@ -666,6 +668,15 @@ void VulkanRenderer::createUniformBuffers(int number) {
                         mUniformBuffers[i], mUniformBuffersMemory[i]);
   }
 
+}
+
+void VulkanRenderer::loadTextures() {
+  Utils::Texture firstTexture = VulkanHelper::loadTexture("textures/amdtexture.jpg",
+                                                          VK_FORMAT_R8G8B8A8_SRGB,
+                                                          mPhysicalDevice,
+                                                          mLogicalDevice,
+                                                          mCommandPool,
+                                                          mGraphicsQueue);
 }
 
 void VulkanRenderer::createDescriptorPool(int number) {

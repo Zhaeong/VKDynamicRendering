@@ -27,7 +27,7 @@ SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
 
-STB_INCLUDE_PATH =  D:\Github\EsDeElVulkan\external	
+STB_INCLUDE_PATH =  D:\Github\VKDynamicRendering\external
 #WORKSPACE_ROOT =  D:\Github\EsDeElVulkan
 
 SRCS = $(wildcard $(SRCDIR)/*.cpp)
