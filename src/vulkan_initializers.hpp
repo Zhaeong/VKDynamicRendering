@@ -267,4 +267,19 @@ inline VkImageMemoryBarrier image_memory_barrier()
 	return image_memory_barrier;
 }
 
+inline VkSamplerCreateInfo sampler_create_info()
+{
+	VkSamplerCreateInfo sampler_create_info{};
+	sampler_create_info.sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler_create_info.maxAnisotropy = 1.0f;
+	return sampler_create_info;
+}
+
+inline VkImageViewCreateInfo image_view_create_info()
+{
+	VkImageViewCreateInfo image_view_create_info{};
+	image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	return image_view_create_info;
+}
+
 } // namespace VulkanInit

@@ -778,6 +778,65 @@ inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 
+  // Create a texture sampler
+	// In Vulkan textures are accessed by samplers
+	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
+	// Note: Similar to the samplers available with OpenGL 3.3
+	VkSamplerCreateInfo sampler = VulkanInit::sampler_create_info();
+	sampler.magFilter           = VK_FILTER_LINEAR;
+	sampler.minFilter           = VK_FILTER_LINEAR;
+	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.mipLodBias          = 0.0f;
+	sampler.compareOp           = VK_COMPARE_OP_NEVER;
+	sampler.minLod              = 0.0f;
+	// Set max level-of-detail to mip level count of the texture
+	sampler.maxLod = static_cast<float>(texture.mip_levels);
+	// Enable anisotropic filtering
+	// This feature is optional, so we must check if it's supported on the device
+
+  VkPhysicalDeviceFeatures features{};
+  vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+	if (features.samplerAnisotropy)
+	{
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+		// Use max. level of anisotropy for this example
+		sampler.maxAnisotropy    = properties.limits.maxSamplerAnisotropy;
+		sampler.anisotropyEnable = VK_TRUE;
+	}
+	else
+	{
+		// The device does not support anisotropic filtering
+		sampler.maxAnisotropy    = 1.0;
+		sampler.anisotropyEnable = VK_FALSE;
+	}
+	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	VK_CHECK(vkCreateSampler(device, &sampler, nullptr, &texture.sampler), "vkCreateSampler");
+
+  // Create image view
+	// Textures are not directly accessed by the shaders and
+	// are abstracted by image views containing additional
+	// information and sub resource ranges
+  VkImageViewCreateInfo view = VulkanInit::image_view_create_info();
+	view.viewType              = VK_IMAGE_VIEW_TYPE_2D;
+	view.format                = format;
+	view.components            = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+	// The subresource range describes the set of mip levels (and array layers) that can be accessed through this image view
+	// It's possible to create multiple image views for a single image referring to different (and/or overlapping) ranges of the image
+	view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	view.subresourceRange.baseMipLevel   = 0;
+	view.subresourceRange.baseArrayLayer = 0;
+	view.subresourceRange.layerCount     = 1;
+	// Linear tiling usually won't support mip maps
+	// Only set mip map count if optimal tiling is used
+	view.subresourceRange.levelCount = texture.mip_levels;
+	// The view will be based on the texture's image
+	view.image = texture.image;
+	VK_CHECK(vkCreateImageView(device, &view, nullptr, &texture.view), "vkCreateImageView");
+
   return texture;
 }
 

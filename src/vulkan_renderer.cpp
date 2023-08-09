@@ -37,12 +37,22 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
   //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}};
 
-  std::vector<Utils::Vertex> vertices = {{{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-                                         {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-                                         {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
+  //Direction of coordinates
+  // (-1,-1)   -1   (1, -1)
+  //  
+  // -1         0         1
+  //
+  // (-1, 1)    1    (1, 1)
+
+  std::vector<Utils::Vertex> vertices = {{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}}, //top left
+                                         {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  //top right
+                                         {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},    //bottom right
+                                         {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};  //bottom left
 
   createVertexBuffer(vertices);
-  mIndices = {0, 1, 2};
+  //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  mIndices = {0, 1, 2, 2, 3, 0};
+
   createIndexBuffer(mIndices);
 
   loadTextures();
@@ -51,6 +61,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createDescriptorPool(MAX_FRAMES_IN_FLIGHT);
   createDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 }
+
 VulkanRenderer::~VulkanRenderer() {
   vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
   vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
@@ -766,7 +777,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
 
   Utils::UniformBufferObject ubo{};
-  ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f) * time,
+  ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),
                           glm::vec3(0.0f, 0.0f, 1.0f));
   ubo.view =
       glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
