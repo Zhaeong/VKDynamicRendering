@@ -233,7 +233,16 @@ inline VkDescriptorBufferInfo create_descriptor_buffer(VkBuffer buffer, VkDevice
 	return descriptor;
 }
 
-inline VkWriteDescriptorSet write_descriptor_set(
+inline VkDescriptorImageInfo create_descriptor_texture(Utils::Texture &texture)
+{
+	VkDescriptorImageInfo descriptor{};
+	descriptor.sampler   = texture.sampler;
+	descriptor.imageView = texture.view;
+	descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	return descriptor;
+}
+
+inline VkWriteDescriptorSet write_descriptor_set_from_buffer(
     VkDescriptorSet         dst_set,
     VkDescriptorType        type,
     uint32_t                binding,
@@ -246,6 +255,23 @@ inline VkWriteDescriptorSet write_descriptor_set(
 	write_descriptor_set.descriptorType  = type;
 	write_descriptor_set.dstBinding      = binding;
 	write_descriptor_set.pBufferInfo     = buffer_info;
+	write_descriptor_set.descriptorCount = descriptor_count;
+	return write_descriptor_set;
+}
+
+inline VkWriteDescriptorSet write_descriptor_set_from_image(
+    VkDescriptorSet        dst_set,
+    VkDescriptorType       type,
+    uint32_t               binding,
+    VkDescriptorImageInfo *image_info,
+    uint32_t               descriptor_count = 1)
+{
+	VkWriteDescriptorSet write_descriptor_set{};
+	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write_descriptor_set.dstSet          = dst_set;
+	write_descriptor_set.descriptorType  = type;
+	write_descriptor_set.dstBinding      = binding;
+	write_descriptor_set.pImageInfo      = image_info;
 	write_descriptor_set.descriptorCount = descriptor_count;
 	return write_descriptor_set;
 }

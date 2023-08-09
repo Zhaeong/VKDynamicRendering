@@ -637,6 +637,8 @@ inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
                         VkQueue submitQueue) {
   Utils::Texture texture{};
 
+  texture.texPath = texPath;
+
   int texWidth, texHeight, texChannels;
   stbi_uc *pixels = stbi_load(texPath, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
   VkDeviceSize imageSize = texWidth * texHeight * 4;
