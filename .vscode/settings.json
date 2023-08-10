@@ -49,6 +49,14 @@
         "ctime": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "bit": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "numbers": "cpp",
+        "codecvt": "cpp",
+        "iomanip": "cpp"
     }
 }

@@ -5,6 +5,7 @@
 
 #include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
+#include <filesystem>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>

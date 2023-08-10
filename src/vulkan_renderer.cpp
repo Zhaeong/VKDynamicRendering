@@ -132,11 +132,22 @@ void VulkanRenderer::createInstance() {
     enabledLayerNames = mValidationLayers.data();
   }
 
-  VkInstanceCreateInfo createInfo = VulkanInit::instance_create_info(
-      appInfo, requiredVkExtenstionsForSDL.size(),
-      requiredVkExtenstionsForSDL.data(), enabledLayerCount, enabledLayerNames);
+  VkInstanceCreateInfo instance_create_info{};
+  instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_create_info.pApplicationInfo = &appInfo;
+  instance_create_info.enabledExtensionCount = requiredVkExtenstionsForSDL.size();
+  if (requiredVkExtenstionsForSDL.size() > 0) {
+    instance_create_info.ppEnabledExtensionNames = requiredVkExtenstionsForSDL.data();
+  }
+  instance_create_info.enabledLayerCount = enabledLayerCount;
+  if (enabledLayerCount > 0) {
 
-  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &mInstance),
+    instance_create_info.ppEnabledLayerNames = enabledLayerNames;
+  }
+
+  instance_create_info.pNext = nullptr;
+
+  VK_CHECK(vkCreateInstance(&instance_create_info, nullptr, &mInstance),
            "vkCreateInstance");
 }
 
@@ -702,7 +713,10 @@ void VulkanRenderer::createUniformBuffers(int number) {
 }
 
 void VulkanRenderer::loadTextures() {
-  Utils::Texture firstTexture = VulkanHelper::loadTexture("textures/amdtexture.jpg",
+
+  std::filesystem::path p = std::filesystem::current_path();
+
+  Utils::Texture firstTexture = VulkanHelper::loadTexture((p.generic_string() + "/textures/amdtexture.jpg").c_str(),
                                                           VK_FORMAT_R8G8B8A8_SRGB,
                                                           mPhysicalDevice,
                                                           mLogicalDevice,
@@ -710,7 +724,7 @@ void VulkanRenderer::loadTextures() {
                                                           mGraphicsQueue);
   mTextures.push_back(firstTexture);
 
-  Utils::Texture secondTexture = VulkanHelper::loadTexture("textures/amdtexture2.jpg",
+  Utils::Texture secondTexture = VulkanHelper::loadTexture((p.generic_string() + "/textures/amdtexture2.jpg").c_str(),
                                                           VK_FORMAT_R8G8B8A8_SRGB,
                                                           mPhysicalDevice,
                                                           mLogicalDevice,
@@ -730,17 +744,17 @@ void VulkanRenderer::createDescriptorPool(int number) {
   poolSizeUBO.descriptorCount = static_cast<uint32_t>(number);
   poolSizes.push_back(poolSizeUBO);
 
-  // VkDescriptorPoolSize poolSizeIMGSampler{};
-  // poolSizeIMGSampler.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  // poolSizeIMGSampler.descriptorCount = static_cast<uint32_t>(number);
-  // poolSizes.push_back(poolSizeIMGSampler);
+  VkDescriptorPoolSize poolSizeIMGSampler{};
+  poolSizeIMGSampler.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizeIMGSampler.descriptorCount = static_cast<uint32_t>(number);
+  poolSizes.push_back(poolSizeIMGSampler);
 
   VkDescriptorPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
 
-  poolInfo.maxSets = static_cast<uint32_t>(number);
+  poolInfo.maxSets = static_cast<uint32_t>(mTextures.size());
   if (vkCreateDescriptorPool(mLogicalDevice, &poolInfo, nullptr, &mDescriptorPool) !=
       VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
@@ -777,6 +791,7 @@ void VulkanRenderer::setupDescriptorSetLayout()
 void VulkanRenderer::createDescriptorSets()
 {
   //Create a descriptor set per image
+  std::cout << "Creating: " << mTextures.size() << " DescriptorSets\n";
   mDescriptorSets.resize(mTextures.size());
 
   //The layouts array must equal to the number of descriptor sets you want to allocate

@@ -40,23 +40,20 @@ LINKERS = -lSDL2main -lSDL2 -lvulkan
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
-HDRDIR = include
 
 STB_INCLUDE_PATH =  /home/mvtest/Documents/VKDynamicRendering/external
 SDK_PATH = /home/mvtest/Desktop/1.3.236.0/x86_64
 
 SRCS = $(wildcard $(SRCDIR)/*.cpp)
 
-HEADERS = $(wildcard $(HDRDIR)/*.hpp)
+HEADERS = $(wildcard $(SRCDIR)/*.hpp)
 
 OBJFILES = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 
-SRCFILES = $(patsubst $(SRCDIR)/%,%,$(SRCS))
-HEADERFILES = $(patsubst $(HDRDIR)/%,%,$(HEADERS))
 
 EXENAME = vkGame
 
-INCLUDES = -Iinclude                                                     \
+INCLUDES = -Isrc                                                     \
 		   -I$(SDK_PATH)/include								 \
 		   -I$(STB_INCLUDE_PATH)
 
@@ -72,7 +69,7 @@ $(BINDIR)/$(EXENAME): $(OBJFILES)
 #$(OBJDIR)/%.o: $(SRCS) $(HEADERS)
 #	$(CC) $(CFLAGS) -c $^ -o $@ $(INCLUDES)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HDRDIR)/%.hpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/%.hpp
 	$(CC) $(CFLAGS) -c $< -o $@ $(INCLUDES)
 
 #Makes it so that if these files exist, it won't mess up Makefile

@@ -9,7 +9,7 @@
   do {                                                                         \
     VkResult err = x;                                                          \
     if (err) {                                                                 \
-      std::cout << "Detected Vulkan error: " << s << "\n";                     \
+      std::cout << "Detected Vulkan error: " << s << " errnum:" << err << "\n";                     \
       abort();                                                                 \
     }                                                                          \
   } while (0)
@@ -74,7 +74,7 @@ struct UniformBufferObject {
 };
 
 struct Texture {
-  const char *texPath;
+  std::string texPath;
   VkSampler sampler;
   VkImage image;
   VkImageLayout image_layout;

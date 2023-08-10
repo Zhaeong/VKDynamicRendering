@@ -13,36 +13,13 @@ namespace VulkanInit {
 inline VkApplicationInfo application_info() {
   VkApplicationInfo application_info{};
   application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  application_info.pNext = NULL;
   application_info.pApplicationName = "SDLVulkanWithDyn";
   application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   application_info.pEngineName = "No Engine";
   application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
   application_info.apiVersion = VK_API_VERSION_1_3;
   return application_info;
-}
-
-inline VkInstanceCreateInfo
-instance_create_info(VkApplicationInfo appInfo, uint32_t enabledExtensionCount,
-                     const char *const *enabledExtensionNames,
-                     uint32_t enabledLayerCount,
-                     const char *const *enabledLayerNames) {
-  VkInstanceCreateInfo instance_create_info{};
-
-  instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instance_create_info.pApplicationInfo = &appInfo;
-  instance_create_info.enabledExtensionCount = enabledExtensionCount;
-  if (enabledExtensionCount > 0) {
-    instance_create_info.ppEnabledExtensionNames = enabledExtensionNames;
-  }
-  instance_create_info.enabledLayerCount = enabledLayerCount;
-  if (enabledLayerCount > 0) {
-
-    instance_create_info.ppEnabledLayerNames = enabledLayerNames;
-  }
-
-  instance_create_info.pNext = nullptr;
-
-  return instance_create_info;
 }
 
 inline VkDeviceQueueCreateInfo
