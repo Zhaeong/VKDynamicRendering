@@ -82,6 +82,7 @@ struct Texture {
   VkImageView view;
   uint32_t width, height;
   uint32_t mip_levels;
+  uint32_t descriptor_set_index;
 };
 
 } // namespace Utils

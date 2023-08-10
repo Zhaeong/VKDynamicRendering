@@ -121,7 +121,7 @@ public:
   void loadTextures();
   
   void createDescriptorPool(int number);
-  void createDescriptorSets(int number);
+  void createDescriptorSets();
 
   // Rendering functionality
 
