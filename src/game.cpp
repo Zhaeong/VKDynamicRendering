@@ -32,7 +32,7 @@ void Game::run() {
     // std::cout << "Eventer: " << event << "\n";
     vulkanRenderer->drawFrame();
 
-    SDL_Delay(1000);
+    // SDL_Delay(1000);
     //   isRunning = false;
   }
 }
