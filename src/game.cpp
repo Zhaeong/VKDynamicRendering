@@ -27,7 +27,6 @@ void Game::run() {
 
   SDL_Event event;
 
-  // vulkanRenderer->resetQueryPool();
   while (isRunning) {
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
