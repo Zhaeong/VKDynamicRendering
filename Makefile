@@ -43,12 +43,12 @@ EXENAME = vkGame
 
 INCLUDES = -Isrc                                                         \
 		   -I$(STB_INCLUDE_PATH)										 \
-		   -IC:\VulkanSDK\1.3.211.0\Include								 \
-		   -IC:\VulkanSDK\1.3.211.0\Third-Party\Include					 \
-		   -IC:\VulkanSDK\SDL2-2.0.22\x86_64-w64-mingw32\include		 \
+		   -IC:\VulkanSDK\1.3.243.0\Include								 \
+		   -IC:\VulkanSDK\1.3.243.0\Third-Party\Include					 \
+		   -IC:\VulkanSDK\SDL2-2.28.1\x86_64-w64-mingw32\include		 \
 
-LIBS = -LC:\VulkanSDK\1.3.211.0\Lib						\
-	   -LC:\VulkanSDK\SDL2-2.0.22\x86_64-w64-mingw32\lib  \
+LIBS = -LC:\VulkanSDK\1.3.243.0\Lib						\
+	   -LC:\VulkanSDK\SDL2-2.28.1\x86_64-w64-mingw32\lib  \
 
 #Need to put the linkers at the end of the call
 $(BINDIR)/$(EXENAME): $(OBJFILES)
