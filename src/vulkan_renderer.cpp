@@ -13,12 +13,16 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   pickPhysicalDevice();
   createLogicalDevice();
 
-  createCommandPool();
-  createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
-  createSyncObjects(MAX_FRAMES_IN_FLIGHT);
+  // createCommandPool();
+  // createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
+  // createSyncObjects(MAX_FRAMES_IN_FLIGHT);
 
   createSwapChain(mSurface);
   createSwapChainImageViews();
+
+  createCommandPool();
+  createCommandBuffers(mSwapChainImageCount);
+  createSyncObjects(mSwapChainImageCount);
 
   //loaded before creating the descriptor set bindings
   loadTextures();
@@ -74,9 +78,11 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   createIndexBuffer(mIndices);
 
-  createUniformBuffers(MAX_FRAMES_IN_FLIGHT);
-  createDescriptorPool(MAX_FRAMES_IN_FLIGHT);
+  createUniformBuffers(1);
+  createDescriptorPool(1);
   createDescriptorSets();
+
+  buildDrawingCommandBuffers();
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -265,14 +271,14 @@ void VulkanRenderer::createCommandPool() {
 
 void VulkanRenderer::createCommandBuffers(uint32_t number) {
 
-  mCommandBuffers.resize(number);
+  mDrawingCommandBuffers.resize(number);
 
   VkCommandBufferAllocateInfo allocInfo =
       VulkanInit::command_buffer_allocate_info(
           mCommandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-          (uint32_t)mCommandBuffers.size());
+          (uint32_t)mDrawingCommandBuffers.size());
 
-  VK_CHECK(vkAllocateCommandBuffers(mLogicalDevice, &allocInfo, mCommandBuffers.data()),
+  VK_CHECK(vkAllocateCommandBuffers(mLogicalDevice, &allocInfo, mDrawingCommandBuffers.data()),
            "vkAllocateCommandBuffers");
 }
 
@@ -300,6 +306,67 @@ void VulkanRenderer::createSyncObjects(uint32_t number) {
           "failed to create synchronization objects for a frame!");
     }
   }
+}
+
+void VulkanRenderer::buildDrawingCommandBuffers(){
+  for (int32_t i = 0; i < mDrawingCommandBuffers.size(); ++i) {
+    VulkanHelper::beginDrawingCommandBuffer(mDrawingCommandBuffers[i]);
+
+    VkImageSubresourceRange range{};
+    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = VK_REMAINING_MIP_LEVELS;
+    range.baseArrayLayer = 0;
+    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    VulkanInit::insert_image_memory_barrier(
+        mDrawingCommandBuffers[i], mSwapChainImages[i],
+        0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, range);
+
+    // Normally renderpass, use renderinginfo for dynamic rendering
+    VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
+    renderingColorAttachmentInfo.sType =
+        VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    renderingColorAttachmentInfo.imageView =
+        mSwapChainImageViews[i];
+    renderingColorAttachmentInfo.imageLayout =
+        VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+    renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    renderingColorAttachmentInfo.clearValue = clearColor;
+
+    VkRenderingInfoKHR renderingInfo{};
+    renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    renderingInfo.renderArea.offset = {0, 0};
+    renderingInfo.renderArea.extent = mSwapChainExtent;
+    renderingInfo.layerCount = 1;
+    renderingInfo.colorAttachmentCount = 1;
+    renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
+    // dynamic rendering end
+    //===============================================================
+
+    vkCmdBeginRendering(mDrawingCommandBuffers[i], &renderingInfo);
+
+    drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices,
+                    mIndices, mVertexBuffer, mIndexBuffer);
+
+    vkCmdEndRendering(mDrawingCommandBuffers[i]);
+
+    VulkanInit::insert_image_memory_barrier(
+        mDrawingCommandBuffers[i], mSwapChainImages[i],
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, range);
+
+
+    VK_CHECK(vkEndCommandBuffer(mDrawingCommandBuffers[i]), "vkEndCommandBuffer"); 
+  }
+
 }
 
 void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
@@ -842,7 +909,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
 
   Utils::UniformBufferObject ubo{};
-  ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),
+  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
                           glm::vec3(0.0f, 0.0f, 1.0f));
   ubo.view =
       glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
@@ -901,13 +968,12 @@ void VulkanRenderer::drawFromIndices(VkCommandBuffer commandBuffer,
 
 
 void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
-                                         int imageIndex, VkPipeline graphicsPipeline,
+                                         VkPipeline graphicsPipeline,
                                          std::vector<Utils::Vertex> vertices,
                                          std::vector<uint16_t> indices,
                                          VkBuffer vertexBuffer,
                                          VkBuffer indexBuffer) {
 
-  updateUniformBuffer(imageIndex);
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     graphicsPipeline);
 
@@ -917,10 +983,6 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
   vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
                        VK_INDEX_TYPE_UINT16);
 
-  // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                         mPipelineLayout, 0, 1,
-  //                         &mDescriptorSets[imageIndex], 0,
-  //                         nullptr);
   
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           mPipelineLayout, 0, 1,
@@ -942,12 +1004,12 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 }
 
 void VulkanRenderer::drawFrame() {
-  vkWaitForFences(mLogicalDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE,
+  vkWaitForFences(mLogicalDevice, 1, &mInFlightFences[mCurrentSwapChainImage], VK_TRUE,
                   UINT64_MAX);
 
   VkResult result =
       vkAcquireNextImageKHR(mLogicalDevice, mSwapChain, UINT64_MAX,
-                            mImageAvailableSemaphores[mCurrentFrame],
+                            mImageAvailableSemaphores[mCurrentSwapChainImage],
                             VK_NULL_HANDLE, &mCurrentSwapChainImage);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -958,76 +1020,23 @@ void VulkanRenderer::drawFrame() {
     throw std::runtime_error("failed to acquire swap chain image!");
   }
 
-  vkResetFences(mLogicalDevice, 1, &mInFlightFences[mCurrentFrame]);
+  vkResetFences(mLogicalDevice, 1, &mInFlightFences[mCurrentSwapChainImage]);
 
-  VulkanHelper::beginDrawingCommandBuffer(mCommandBuffers[mCurrentFrame]);
+  std::cout << "Current frame: " << mCurrentSwapChainImage << "\n";
 
-  VkImageSubresourceRange range{};
-  range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  range.baseMipLevel = 0;
-  range.levelCount = VK_REMAINING_MIP_LEVELS;
-  range.baseArrayLayer = 0;
-  range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+  updateUniformBuffer(0);
 
-  VulkanInit::insert_image_memory_barrier(
-      mCommandBuffers[mCurrentFrame], mSwapChainImages[mCurrentSwapChainImage],
-      0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, range);
+  std::vector<VkCommandBuffer> commandBuffers = {
+			mDrawingCommandBuffers[mCurrentSwapChainImage]
+		};
 
-  // Normally renderpass, use renderinginfo for dynamic rendering
-  VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
-  renderingColorAttachmentInfo.sType =
-      VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-  renderingColorAttachmentInfo.imageView =
-      mSwapChainImageViews[mCurrentSwapChainImage];
-  renderingColorAttachmentInfo.imageLayout =
-      VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
-  renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-  renderingColorAttachmentInfo.clearValue = clearColor;
-
-  VkRenderingInfoKHR renderingInfo{};
-  renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-  renderingInfo.renderArea.offset = {0, 0};
-  renderingInfo.renderArea.extent = mSwapChainExtent;
-  renderingInfo.layerCount = 1;
-  renderingInfo.colorAttachmentCount = 1;
-  renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
-  // dynamic rendering end
-  //===============================================================
-
-  vkCmdBeginRendering(mCommandBuffers[mCurrentFrame], &renderingInfo);
-
-  // drawFromVertices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline,
-  // mVertices,
-  //                  mVertexBuffer);
-
-  // drawFromIndices(mCommandBuffers[mCurrentFrame], mGraphicsPipeline, mVertices,
-  //                 mIndices, mVertexBuffer, mIndexBuffer);
-
-
-  drawFromDescriptors(mCommandBuffers[mCurrentFrame], mCurrentFrame, mGraphicsPipeline, mVertices,
-                  mIndices, mVertexBuffer, mIndexBuffer);
-
-  vkCmdEndRendering(mCommandBuffers[mCurrentFrame]);
-
-  VulkanInit::insert_image_memory_barrier(
-      mCommandBuffers[mCurrentFrame], mSwapChainImages[mCurrentSwapChainImage],
-      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, range);
-
-  VulkanHelper::endDrawingCommandBuffer(
-      mCommandBuffers[mCurrentFrame], mGraphicsQueue,
-      mImageAvailableSemaphores[mCurrentFrame],
-      mRenderFinishedSemaphores[mCurrentFrame], mInFlightFences[mCurrentFrame]);
+  VulkanHelper::submitCommandBuffers(
+       commandBuffers, mGraphicsQueue,
+       mImageAvailableSemaphores[mCurrentSwapChainImage],
+       mRenderFinishedSemaphores[mCurrentSwapChainImage], mInFlightFences[mCurrentSwapChainImage]);
 
   // Now present the image
-  VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
+  VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentSwapChainImage]};
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1056,8 +1065,6 @@ void VulkanRenderer::drawFrame() {
   } else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image!");
   }
-
-  mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 } // namespace VulkanEngine

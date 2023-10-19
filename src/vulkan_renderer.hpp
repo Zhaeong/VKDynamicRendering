@@ -42,12 +42,10 @@ public:
 
   //===================================================
   // Command Submission
-  const int MAX_FRAMES_IN_FLIGHT = 2;
-  uint32_t mCurrentFrame = 0;
-  uint32_t mCurrentSwapChainImage;
+  uint32_t mCurrentSwapChainImage = 0;
 
   VkCommandPool mCommandPool;
-  std::vector<VkCommandBuffer> mCommandBuffers;
+  std::vector<VkCommandBuffer> mDrawingCommandBuffers;
 
   std::vector<VkSemaphore> mImageAvailableSemaphores;
   std::vector<VkSemaphore> mRenderFinishedSemaphores;
@@ -105,6 +103,8 @@ public:
   void createCommandBuffers(uint32_t number);
   void createSyncObjects(uint32_t number);
 
+  void buildDrawingCommandBuffers();
+
   // Swapchain
   void createSwapChain(VkSurfaceKHR surface);
   void createSwapChainImageViews();
@@ -140,7 +140,7 @@ public:
                        VkBuffer indexBuffer);
 
   void drawFromDescriptors(VkCommandBuffer commandBuffer,
-                           int imageIndex, VkPipeline graphicsPipeline,
+                           VkPipeline graphicsPipeline,
                            std::vector<Utils::Vertex> vertices,
                            std::vector<uint16_t> indices,
                            VkBuffer vertexBuffer,

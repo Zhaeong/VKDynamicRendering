@@ -480,7 +480,7 @@ inline void beginDrawingCommandBuffer(VkCommandBuffer commandBuffer) {
   VkCommandBufferBeginInfo beginInfo = VulkanInit::command_buffer_begin_info();
 
   // telling driver about our onetime usage
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  //beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
   vkBeginCommandBuffer(commandBuffer, &beginInfo);
 }
@@ -505,6 +505,35 @@ inline void endDrawingCommandBuffer(VkCommandBuffer commandBuffer,
 
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
+
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  if (vkQueueSubmit(submitQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to submit draw command buffer!");
+  }
+}
+
+inline void submitCommandBuffers(std::vector<VkCommandBuffer> commandBuffers,
+                                    VkQueue submitQueue,
+                                    VkSemaphore imageAvailableSemaphore,
+                                    VkSemaphore renderFinishedSemaphore,
+                                    VkFence inFlightFence) {
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+  VkPipelineStageFlags waitStages[] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+
+  submitInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+	submitInfo.pCommandBuffers = commandBuffers.data();
+
 
   VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
   submitInfo.signalSemaphoreCount = 1;
