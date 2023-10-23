@@ -5,6 +5,9 @@
 
 #include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
+
+#include <text_overlay.hpp>
+
 #include <filesystem>
 
 #define GLM_FORCE_RADIANS
@@ -36,6 +39,8 @@ public:
   VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
 
   VkDevice mLogicalDevice;
+
+  Utils::QueueFamilyIndices mQueueFamilyIndices;
 
   VkQueue mGraphicsQueue;
   VkQueue mPresentQueue;
@@ -87,6 +92,9 @@ public:
   VkDescriptorPool mDescriptorPool;
   VkDescriptorSetLayout mDescriptorSetLayout{VK_NULL_HANDLE};
   std::vector<VkDescriptorSet> mDescriptorSets;
+
+
+  TextOverlay *mTextOverlay;
 
   //===================================================
   // Functions

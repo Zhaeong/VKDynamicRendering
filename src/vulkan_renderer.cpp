@@ -20,6 +20,9 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChain(mSurface);
   createSwapChainImageViews();
 
+
+  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages);
+
   createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
   createSyncObjects(mSwapChainImageCount);
@@ -195,14 +198,13 @@ void VulkanRenderer::pickPhysicalDevice() {
 void VulkanRenderer::createLogicalDevice() {
 
   // Specifying queues to be created
-  Utils::QueueFamilyIndices indices =
-      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, mSurface);
+  mQueueFamilyIndices = VulkanHelper::iFindQueueFamilies(mPhysicalDevice, mSurface);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
   // set will only contain unique values
-  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily,
-                                            indices.presentFamily};
+  std::set<uint32_t> uniqueQueueFamilies = {mQueueFamilyIndices.graphicsFamily,
+                                            mQueueFamilyIndices.presentFamily};
 
   // create device queue
   // Assigns priorty to queues to influence scheduling of comand buffer
@@ -249,24 +251,19 @@ void VulkanRenderer::createLogicalDevice() {
     throw std::runtime_error("failed to create logical device!");
   }
 
-  vkGetDeviceQueue(mLogicalDevice, indices.graphicsFamily, 0, &mGraphicsQueue);
+  vkGetDeviceQueue(mLogicalDevice, mQueueFamilyIndices.graphicsFamily, 0, &mGraphicsQueue);
 
   // Now create the present queue
-  vkGetDeviceQueue(mLogicalDevice, indices.presentFamily, 0, &mPresentQueue);
+  vkGetDeviceQueue(mLogicalDevice, mQueueFamilyIndices.presentFamily, 0, &mPresentQueue);
 }
 
 void VulkanRenderer::createCommandPool() {
-  Utils::QueueFamilyIndices queueFamilyIndices =
-      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, mSurface);
 
   VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+  poolInfo.queueFamilyIndex = mQueueFamilyIndices.graphicsFamily;
 
-  if (vkCreateCommandPool(mLogicalDevice, &poolInfo, nullptr, &mCommandPool) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to create command pool!");
-  }
+  VK_CHECK(vkCreateCommandPool(mLogicalDevice, &poolInfo, nullptr, &mCommandPool), "vkCreateCommandPool");
 }
 
 void VulkanRenderer::createCommandBuffers(uint32_t number) {
@@ -412,12 +409,10 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-  Utils::QueueFamilyIndices indices =
-      VulkanHelper::iFindQueueFamilies(mPhysicalDevice, surface);
-  uint32_t queueFamilyIndices[] = {indices.graphicsFamily,
-                                   indices.presentFamily};
+  uint32_t queueFamilyIndices[] = {mQueueFamilyIndices.graphicsFamily,
+                                   mQueueFamilyIndices.presentFamily};
 
-  if (indices.graphicsFamily != indices.presentFamily) {
+  if (mQueueFamilyIndices.graphicsFamily != mQueueFamilyIndices.presentFamily) {
     createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
     createInfo.queueFamilyIndexCount = 2;
     createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -1022,7 +1017,7 @@ void VulkanRenderer::drawFrame() {
 
   vkResetFences(mLogicalDevice, 1, &mInFlightFences[mCurrentSwapChainImage]);
 
-  std::cout << "Current frame: " << mCurrentSwapChainImage << "\n";
+  // std::cout << "Current frame: " << mCurrentSwapChainImage << "\n";
 
   updateUniformBuffer(0);
 
