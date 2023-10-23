@@ -13,7 +13,9 @@ TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice
 }
 
 TextOverlay::~TextOverlay(){
-
+    vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
+	vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
+    vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
 }
 
 void TextOverlay::prepareResources(){
