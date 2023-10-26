@@ -177,6 +177,19 @@ inline VkDescriptorSetLayoutBinding descriptor_set_layout_binding(
 	return set_layout_binding;
 }
 
+inline VkDescriptorPoolCreateInfo descriptor_pool_create_info(
+			uint32_t poolSizeCount,
+			VkDescriptorPoolSize* pPoolSizes,
+			uint32_t maxSets)
+{
+  VkDescriptorPoolCreateInfo descriptorPoolInfo {};
+  descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptorPoolInfo.poolSizeCount = poolSizeCount;
+  descriptorPoolInfo.pPoolSizes = pPoolSizes;
+  descriptorPoolInfo.maxSets = maxSets;
+  return descriptorPoolInfo;
+}
+
 inline VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
     const VkDescriptorSetLayoutBinding *bindings,
     uint32_t                            binding_count)
@@ -209,6 +222,15 @@ inline VkDescriptorBufferInfo create_descriptor_buffer(VkBuffer buffer, VkDevice
 	descriptor.offset = offset;
 	return descriptor;
 }
+
+inline VkDescriptorImageInfo create_descriptor_texture_raw(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
+  {
+    VkDescriptorImageInfo descriptorImageInfo {};
+    descriptorImageInfo.sampler = sampler;
+    descriptorImageInfo.imageView = imageView;
+    descriptorImageInfo.imageLayout = imageLayout;
+    return descriptorImageInfo;
+  }
 
 inline VkDescriptorImageInfo create_descriptor_texture(Utils::Texture &texture)
 {
@@ -283,6 +305,13 @@ inline VkImageViewCreateInfo image_view_create_info()
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	return image_view_create_info;
+}
+
+inline VkSubmitInfo submit_info()
+{
+  VkSubmitInfo submitInfo {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  return submitInfo;
 }
 
 } // namespace VulkanInit

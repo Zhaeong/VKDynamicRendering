@@ -5,6 +5,8 @@
 #include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
 
+#include <stb_font_consolas_24_latin1.inl>
+
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
 class TextOverlay {
     private:
@@ -13,16 +15,36 @@ class TextOverlay {
         VkDevice mLogicalDevice;
         uint32_t mGraphicsFamilyIndex;
         std::vector<VkImage> mSwapChainImages;
+        VkQueue mQueue;
 
         //Created by object
         VkCommandPool mCommandPool;
         VkBuffer mVertexBuffer;
         VkDeviceMemory mVertexBufferMemory;
 
+        //Vulkan Image
+	    VkImage mImage;
+        VkDeviceMemory mImageMemory;
+	    VkImageView mImageView;
+        VkSampler mSampler;
+
+        VkDescriptorPool mDescriptorPool;
+	    VkDescriptorSetLayout mDescriptorSetLayout;
+	    VkDescriptorSet mDescriptorSet;
+
+        VkPipelineLayout mPipelineLayout;
+	    VkPipelineCache mPipelineCache;
+	    VkPipeline mPipeline;
+
+        // Pointer to mapped vertex buffer
+	    glm::vec4 *mMappedVertexBuffer = nullptr;
+	    stb_fontchar mSTBFontData[STB_FONT_consolas_24_latin1_NUM_CHARS];
+	    uint32_t mNumLetters;
+
     public:
 
         std::vector<VkCommandBuffer> mCommandBuffers;
-        TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages);
+        TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkQueue queue);
         ~TextOverlay();
 
         void prepareResources();

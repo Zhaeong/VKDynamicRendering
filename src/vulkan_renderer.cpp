@@ -21,7 +21,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChainImageViews();
 
 
-  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages);
+  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages, mGraphicsQueue);
 
   createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
@@ -815,8 +815,8 @@ void VulkanRenderer::createDescriptorPool(int number) {
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-
   poolInfo.maxSets = static_cast<uint32_t>(mTextures.size());
+
   if (vkCreateDescriptorPool(mLogicalDevice, &poolInfo, nullptr, &mDescriptorPool) !=
       VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
