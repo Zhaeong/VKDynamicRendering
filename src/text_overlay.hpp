@@ -15,6 +15,7 @@ class TextOverlay {
         VkDevice mLogicalDevice;
         uint32_t mGraphicsFamilyIndex;
         std::vector<VkImage> mSwapChainImages;
+        VkFormat mSwapChainImageFormat;
         VkQueue mQueue;
 
         //Created by object
@@ -44,9 +45,10 @@ class TextOverlay {
     public:
 
         std::vector<VkCommandBuffer> mCommandBuffers;
-        TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkQueue queue);
+        TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkFormat swapChainImageFormat, VkQueue queue);
         ~TextOverlay();
 
         void prepareResources();
+        void preparePipeline();
 
 };

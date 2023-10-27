@@ -314,4 +314,145 @@ inline VkSubmitInfo submit_info()
   return submitInfo;
 }
 
+inline VkVertexInputBindingDescription vertex_input_binding_description(
+			uint32_t binding,
+			uint32_t stride,
+			VkVertexInputRate inputRate)
+{
+  VkVertexInputBindingDescription vInputBindDescription {};
+  vInputBindDescription.binding = binding;
+  vInputBindDescription.stride = stride;
+  vInputBindDescription.inputRate = inputRate;
+  return vInputBindDescription;
+}
+
+inline VkVertexInputAttributeDescription vertex_input_attribute_description(
+  uint32_t binding,
+  uint32_t location,
+  VkFormat format,
+  uint32_t offset)
+{
+  VkVertexInputAttributeDescription vInputAttribDescription {};
+  vInputAttribDescription.location = location;
+  vInputAttribDescription.binding = binding;
+  vInputAttribDescription.format = format;
+  vInputAttribDescription.offset = offset;
+  return vInputAttribDescription;
+}
+
+inline VkPipelineVertexInputStateCreateInfo pipeline_vertex_input_state_create_info(
+			const std::vector<VkVertexInputBindingDescription> &vertexBindingDescriptions,
+			const std::vector<VkVertexInputAttributeDescription> &vertexAttributeDescriptions
+		)
+{
+  VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo{};
+  pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDescriptions.size());
+  pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexBindingDescriptions.data();
+  pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDescriptions.size());
+  pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
+  return pipelineVertexInputStateCreateInfo;
+}
+
+inline VkPipelineInputAssemblyStateCreateInfo pipeline_input_assembly_state_create_info(
+  VkPrimitiveTopology topology,
+  VkPipelineInputAssemblyStateCreateFlags flags,
+  VkBool32 primitiveRestartEnable)
+{
+  VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo {};
+  pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  pipelineInputAssemblyStateCreateInfo.topology = topology;
+  pipelineInputAssemblyStateCreateInfo.flags = flags;
+  pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = primitiveRestartEnable;
+  return pipelineInputAssemblyStateCreateInfo;
+}
+
+inline VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info(
+  VkPolygonMode polygonMode,
+  VkCullModeFlags cullMode,
+  VkFrontFace frontFace,
+  VkPipelineRasterizationStateCreateFlags flags = 0)
+{
+  VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo {};
+  pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  pipelineRasterizationStateCreateInfo.polygonMode = polygonMode;
+  pipelineRasterizationStateCreateInfo.cullMode = cullMode;
+  pipelineRasterizationStateCreateInfo.frontFace = frontFace;
+  pipelineRasterizationStateCreateInfo.flags = flags;
+  pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
+  pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
+  return pipelineRasterizationStateCreateInfo;
+}
+
+inline VkPipelineColorBlendAttachmentState pipeline_colorblend_attachment_state(
+  VkColorComponentFlags colorWriteMask,
+  VkBool32 blendEnable)
+{
+  VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState {};
+  pipelineColorBlendAttachmentState.colorWriteMask = colorWriteMask;
+  pipelineColorBlendAttachmentState.blendEnable = blendEnable;
+  return pipelineColorBlendAttachmentState;
+}
+
+inline VkPipelineColorBlendStateCreateInfo pipeline_colorblend_state_create_info(
+  uint32_t attachmentCount,
+  const VkPipelineColorBlendAttachmentState * pAttachments)
+{
+  VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo {};
+  pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  pipelineColorBlendStateCreateInfo.attachmentCount = attachmentCount;
+  pipelineColorBlendStateCreateInfo.pAttachments = pAttachments;
+  return pipelineColorBlendStateCreateInfo;
+}
+
+inline VkPipelineDepthStencilStateCreateInfo pipeline_depthstencil_state_create_info(
+  VkBool32 depthTestEnable,
+  VkBool32 depthWriteEnable,
+  VkCompareOp depthCompareOp)
+{
+  VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo {};
+  pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  pipelineDepthStencilStateCreateInfo.depthTestEnable = depthTestEnable;
+  pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
+  pipelineDepthStencilStateCreateInfo.depthCompareOp = depthCompareOp;
+  pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+  return pipelineDepthStencilStateCreateInfo;
+}
+
+inline VkPipelineViewportStateCreateInfo pipeline_viewport_state_create_Info(
+  uint32_t viewportCount,
+  uint32_t scissorCount,
+  VkPipelineViewportStateCreateFlags flags = 0)
+{
+  VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo {};
+  pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  pipelineViewportStateCreateInfo.viewportCount = viewportCount;
+  pipelineViewportStateCreateInfo.scissorCount = scissorCount;
+  pipelineViewportStateCreateInfo.flags = flags;
+  return pipelineViewportStateCreateInfo;
+}
+
+inline VkPipelineMultisampleStateCreateInfo pipeline_multisample_state_create_info(
+  VkSampleCountFlagBits rasterizationSamples,
+  VkPipelineMultisampleStateCreateFlags flags = 0)
+{
+  VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo {};
+  pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  pipelineMultisampleStateCreateInfo.rasterizationSamples = rasterizationSamples;
+  pipelineMultisampleStateCreateInfo.flags = flags;
+  return pipelineMultisampleStateCreateInfo;
+}
+
+inline VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(
+			const std::vector<VkDynamicState>& pDynamicStates,
+			VkPipelineDynamicStateCreateFlags flags = 0)
+{
+  VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
+  pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  pipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates.data();
+  pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(pDynamicStates.size());
+  pipelineDynamicStateCreateInfo.flags = flags;
+  return pipelineDynamicStateCreateInfo;
+}
+
 } // namespace VulkanInit

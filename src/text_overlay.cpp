@@ -1,19 +1,33 @@
 #include <text_overlay.hpp>
 
 
-TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkQueue queue) {
+TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkFormat swapChainImageFormat, VkQueue queue) {
     mPhysicalDevice = physicalDevice;
     mLogicalDevice = logicalDevice;
     mGraphicsFamilyIndex = graphicsFamilyIndex;
     mSwapChainImages = swapChainImages;
+    mSwapChainImageFormat = swapChainImageFormat;
     mQueue = queue;
 
     mCommandBuffers.resize(mSwapChainImages.size());
 
     prepareResources();
+    preparePipeline();
 }
 
 TextOverlay::~TextOverlay(){
+
+    vkDestroySampler(mLogicalDevice, mSampler, nullptr);
+    vkDestroyImage(mLogicalDevice, mImage, nullptr);
+    vkDestroyImageView(mLogicalDevice, mImageView, nullptr);
+    vkFreeMemory(mLogicalDevice, mImageMemory, nullptr);
+    vkDestroyDescriptorSetLayout(mLogicalDevice, mDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(mLogicalDevice, mDescriptorPool, nullptr);
+
+    vkDestroyPipelineLayout(mLogicalDevice, mPipelineLayout, nullptr);
+    vkDestroyPipelineCache(mLogicalDevice, mPipelineCache, nullptr);
+    vkDestroyPipeline(mLogicalDevice, mPipeline, nullptr);
+
     vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
 	vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
     vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
@@ -236,6 +250,97 @@ void TextOverlay::prepareResources(){
     VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
     pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     VK_CHECK(vkCreatePipelineCache(mLogicalDevice, &pipelineCacheCreateInfo, nullptr, &mPipelineCache), "vkCreatePipelineCache");
+
+
+}
+
+void TextOverlay::preparePipeline() {
+
+    //Shader
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    std::string vertShaderPath = "shaders/text.vert.spv";
+    std::string fragShaderPath = "shaders/text.frag.spv";
+    auto vertShaderCode = VulkanHelper::readFile(vertShaderPath);
+    auto fragShaderCode = VulkanHelper::readFile(fragShaderPath);
+
+    shaderStages.push_back(VulkanHelper::loadShader(mLogicalDevice, vertShaderCode, VK_SHADER_STAGE_VERTEX_BIT));
+    shaderStages.push_back(VulkanHelper::loadShader(mLogicalDevice, fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT));
+
+
+    // Enable blending, using alpha from red channel of the font texture (see text.frag)
+    VkPipelineColorBlendAttachmentState blendAttachmentState{};
+    blendAttachmentState.blendEnable = VK_TRUE;
+    blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+    blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = VulkanInit::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
+    VkPipelineRasterizationStateCreateInfo rasterizationState = VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+    VkPipelineColorBlendStateCreateInfo    colorBlendState = VulkanInit::pipeline_colorblend_state_create_info(1, &blendAttachmentState);
+    VkPipelineDepthStencilStateCreateInfo  depthStencilState = VulkanInit::pipeline_depthstencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+    VkPipelineViewportStateCreateInfo      viewportState = VulkanInit::pipeline_viewport_state_create_Info(1, 1, 0);
+    VkPipelineMultisampleStateCreateInfo   multisampleState = VulkanInit::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+    std::vector<VkDynamicState>            dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    VkPipelineDynamicStateCreateInfo       dynamicState = VulkanInit::pipeline_dynamic_state_create_info(dynamicStateEnables);
+
+    const std::vector<VkVertexInputBindingDescription> vertexInputBindings = {
+        VulkanInit::vertex_input_binding_description(0, sizeof(glm::vec4), VK_VERTEX_INPUT_RATE_VERTEX),
+        VulkanInit::vertex_input_binding_description(1, sizeof(glm::vec4), VK_VERTEX_INPUT_RATE_VERTEX),
+    };
+    const std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
+        VulkanInit::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32_SFLOAT, 0),					// Location 0: Position
+        VulkanInit::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(glm::vec2)),	// Location 1: UV
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertexInputState = VulkanInit::pipeline_vertex_input_state_create_info(vertexInputBindings, vertexInputAttributes);
+
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineCreateInfo.layout = mPipelineLayout;
+    pipelineCreateInfo.renderPass = nullptr;
+    pipelineCreateInfo.flags = 0;
+    pipelineCreateInfo.basePipelineIndex = -1;
+    pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+    pipelineCreateInfo.pVertexInputState = &vertexInputState;
+    pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
+    pipelineCreateInfo.pViewportState = &viewportState;
+    pipelineCreateInfo.pRasterizationState = &rasterizationState;
+    pipelineCreateInfo.pMultisampleState = &multisampleState;
+    pipelineCreateInfo.pDepthStencilState = &depthStencilState;
+    pipelineCreateInfo.pColorBlendState = &colorBlendState;
+    pipelineCreateInfo.pDynamicState = &dynamicState;
+
+    pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+    pipelineCreateInfo.pStages = shaderStages.data();
+
+    //================================================================================================
+    // For dynamic rendering
+    //================================================================================================
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{};
+    pipeline_rendering_create_info.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+
+    pipeline_rendering_create_info.colorAttachmentCount = 1;
+    pipeline_rendering_create_info.pColorAttachmentFormats = &mSwapChainImageFormat;
+
+    pipeline_rendering_create_info.depthAttachmentFormat =
+        VulkanHelper::findSupportedFormat(
+            mPhysicalDevice,
+            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+            VK_FORMAT_D24_UNORM_S8_UINT},
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+    pipeline_rendering_create_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
+
+    pipelineCreateInfo.pNext = &pipeline_rendering_create_info;
+
+    VK_CHECK(vkCreateGraphicsPipelines(mLogicalDevice, mPipelineCache, 1, &pipelineCreateInfo, nullptr, &mPipeline), "vkCreateGraphicsPipelines");
 
 
 }

@@ -344,6 +344,17 @@ inline VkShaderModule createShaderModule(VkDevice logicalDevice,
   return shaderModule;
 }
 
+inline VkPipelineShaderStageCreateInfo loadShader(VkDevice logicalDevice, const std::vector<char> &code, VkShaderStageFlagBits stage)
+{
+	VkPipelineShaderStageCreateInfo shaderStage = {};
+	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStage.stage = stage;
+	shaderStage.module = createShaderModule(logicalDevice, code);
+	shaderStage.pName = "main";
+	assert(shaderStage.module != VK_NULL_HANDLE);
+	return shaderStage;
+}
+
 inline VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice,
                                     const std::vector<VkFormat> &candidates,
                                     VkImageTiling tiling,

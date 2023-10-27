@@ -21,7 +21,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChainImageViews();
 
 
-  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages, mGraphicsQueue);
+  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages, mSwapChainImageFormat, mGraphicsQueue);
 
   createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
@@ -476,28 +476,12 @@ void VulkanRenderer::createGraphicsPipeline() {
   VkShaderModule fragShaderModule =
       VulkanHelper::createShaderModule(mLogicalDevice, fragShaderCode);
 
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-  vertShaderStageInfo.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+  shaderStages.push_back(VulkanHelper::loadShader(mLogicalDevice, vertShaderCode, VK_SHADER_STAGE_VERTEX_BIT));
+  shaderStages.push_back(VulkanHelper::loadShader(mLogicalDevice, fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT));
 
-  vertShaderStageInfo.module = vertShaderModule;
-  vertShaderStageInfo.pName = "main";
-
-  // Fragment Shader
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-  fragShaderStageInfo.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStageInfo.module = fragShaderModule;
-  fragShaderStageInfo.pName = "main";
-
-  // Shader stage createInfo
-  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
-                                                    fragShaderStageInfo};
-
-  PIPElineInfo.stageCount = 2;
-  PIPElineInfo.pStages = shaderStages;
+  PIPElineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());;
+  PIPElineInfo.pStages = shaderStages.data();
   //================================================================================================
   // pVertexInputState
   //================================================================================================
