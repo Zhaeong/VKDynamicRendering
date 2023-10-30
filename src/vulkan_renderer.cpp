@@ -21,7 +21,12 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createSwapChainImageViews();
 
 
-  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImages, mSwapChainImageFormat, mGraphicsQueue);
+  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImageViews, mSwapChainImageFormat, mSwapChainExtent, mGraphicsQueue);
+
+
+  mTextOverlay->beginTextUpdate();
+  mTextOverlay->addText("aaaabbb", 5.0f, 5.0f, TextOverlay::alignLeft);
+  mTextOverlay->endTextUpdate();
 
   createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
@@ -1008,6 +1013,8 @@ void VulkanRenderer::drawFrame() {
   std::vector<VkCommandBuffer> commandBuffers = {
 			mDrawingCommandBuffers[mCurrentSwapChainImage]
 		};
+
+  commandBuffers.push_back(mTextOverlay->mCommandBuffers[mCurrentSwapChainImage]);
 
   VulkanHelper::submitCommandBuffers(
        commandBuffers, mGraphicsQueue,

@@ -1,15 +1,16 @@
 #include <text_overlay.hpp>
 
 
-TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImage> swapChainImages, VkFormat swapChainImageFormat, VkQueue queue) {
+TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, uint32_t graphicsFamilyIndex, std::vector<VkImageView> swapChainImageViews, VkFormat swapChainImageFormat, VkExtent2D swapChainExtent, VkQueue queue) {
     mPhysicalDevice = physicalDevice;
     mLogicalDevice = logicalDevice;
     mGraphicsFamilyIndex = graphicsFamilyIndex;
-    mSwapChainImages = swapChainImages;
+    mSwapChainImageViews = swapChainImageViews;
     mSwapChainImageFormat = swapChainImageFormat;
+    mSwapChainExtent = swapChainExtent;
     mQueue = queue;
 
-    mCommandBuffers.resize(mSwapChainImages.size());
+    mCommandBuffers.resize(mSwapChainImageViews.size());
 
     prepareResources();
     preparePipeline();
@@ -343,4 +344,149 @@ void TextOverlay::preparePipeline() {
     VK_CHECK(vkCreateGraphicsPipelines(mLogicalDevice, mPipelineCache, 1, &pipelineCreateInfo, nullptr, &mPipeline), "vkCreateGraphicsPipelines");
 
 
+}
+
+
+// Map buffer
+void TextOverlay::beginTextUpdate()
+{
+    VK_CHECK(vkMapMemory(mLogicalDevice, mVertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mMappedVertexBufferMemory), "vkMapMemory");
+    mNumLetters = 0;
+}
+
+// Add text to the current buffer
+void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
+{
+    const uint32_t firstChar = STB_FONT_consolas_24_latin1_FIRST_CHAR;
+
+    assert(mMappedVertexBufferMemory != nullptr);
+
+    const float charW = 1.5f * mScale / mSwapChainExtent.width;
+    const float charH = 1.5f * mScale / mSwapChainExtent.height;
+
+    float fbW = (float)mSwapChainExtent.width;
+    float fbH = (float)mSwapChainExtent.height;
+    x = (x / fbW * 2.0f) - 1.0f;
+    y = (y / fbH * 2.0f) - 1.0f;
+
+    // Calculate text width
+    float textWidth = 0;
+    for (auto letter : text)
+    {
+        stb_fontchar *charData = &mSTBFontData[(uint32_t)letter - firstChar];
+        textWidth += charData->advance * charW;
+    }
+
+    switch (align)
+    {
+        case alignRight:
+            x -= textWidth;
+            break;
+        case alignCenter:
+            x -= textWidth / 2.0f;
+            break;
+        case alignLeft:
+            break;
+    }
+
+    // Generate a uv mapped quad per char in the new text
+    for (auto letter : text)
+    {
+        stb_fontchar *charData = &mSTBFontData[(uint32_t)letter - firstChar];
+
+        mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
+        mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
+        mMappedVertexBufferMemory->z = charData->s0;
+        mMappedVertexBufferMemory->w = charData->t0;
+        mMappedVertexBufferMemory++;
+
+        mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
+        mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
+        mMappedVertexBufferMemory->z = charData->s1;
+        mMappedVertexBufferMemory->w = charData->t0;
+        mMappedVertexBufferMemory++;
+
+        mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
+        mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
+        mMappedVertexBufferMemory->z = charData->s0;
+        mMappedVertexBufferMemory->w = charData->t1;
+        mMappedVertexBufferMemory++;
+
+        mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
+        mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
+        mMappedVertexBufferMemory->z = charData->s1;
+        mMappedVertexBufferMemory->w = charData->t1;
+        mMappedVertexBufferMemory++;
+
+        x += charData->advance * charW;
+
+        mNumLetters++;
+    }
+}
+
+// Unmap buffer and update command buffers
+void TextOverlay::endTextUpdate()
+{
+    vkUnmapMemory(mLogicalDevice, mVertexBufferMemory);
+    mMappedVertexBufferMemory = nullptr;
+    updateCommandBuffers();
+}
+
+// Needs to be called by the application
+void TextOverlay::updateCommandBuffers()
+{
+    VkCommandBufferBeginInfo beginInfo = VulkanInit::command_buffer_begin_info();
+
+    for (int32_t i = 0; i < mCommandBuffers.size(); ++i)
+    {
+
+        vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
+
+        VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
+        renderingColorAttachmentInfo.sType =
+            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        renderingColorAttachmentInfo.imageView =
+            mSwapChainImageViews[i];
+        renderingColorAttachmentInfo.imageLayout =
+            VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+        renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+        renderingColorAttachmentInfo.clearValue = clearColor;
+
+        VkRenderingInfoKHR renderingInfo{};
+        renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+        renderingInfo.renderArea.offset = {0, 0};
+        renderingInfo.renderArea.extent = mSwapChainExtent;
+        renderingInfo.layerCount = 1;
+        renderingInfo.colorAttachmentCount = 1;
+        renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
+        // dynamic rendering end
+        //===============================================================
+
+        vkCmdBeginRendering(mCommandBuffers[i], &renderingInfo);
+
+        VkViewport viewport = VulkanInit::viewport((float)mSwapChainExtent.width, (float)mSwapChainExtent.height, 0.0f, 1.0f);
+        vkCmdSetViewport(mCommandBuffers[i], 0, 1, &viewport);
+
+        VkRect2D scissor = VulkanInit::rect2D(mSwapChainExtent.width, mSwapChainExtent.height, 0, 0);
+        vkCmdSetScissor(mCommandBuffers[i], 0, 1, &scissor);
+
+        vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
+        vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSet, 0, NULL);
+
+        VkDeviceSize offsets = 0;
+        //First two is pos, second two is uv, so it renders 4
+        vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, &mVertexBuffer, &offsets);
+        vkCmdBindVertexBuffers(mCommandBuffers[i], 1, 1, &mVertexBuffer, &offsets);
+        for (uint32_t j = 0; j < mNumLetters; j++)
+        {
+            vkCmdDraw(mCommandBuffers[i], 4, 1, j * 4, 0);
+        }
+
+        vkCmdEndRendering(mCommandBuffers[i]);
+
+        VK_CHECK(vkEndCommandBuffer(mCommandBuffers[i]), "vkEndCommandBuffer");
+    }
 }
