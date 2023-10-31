@@ -248,6 +248,8 @@ iChooseSwapExtent(SDL_Window *window,
 
   if (capabilities.currentExtent.width !=
       std::numeric_limits<uint32_t>::max()) {
+
+    std::cout << "Swapchain W:" << capabilities.currentExtent.width << " H:" << capabilities.currentExtent.height << "\n";
     return capabilities.currentExtent;
   } else {
     int width, height;
@@ -263,6 +265,8 @@ iChooseSwapExtent(SDL_Window *window,
     actualExtent.height =
         std::clamp(actualExtent.height, capabilities.minImageExtent.height,
                    capabilities.maxImageExtent.height);
+
+    std::cout << "Swapchain W:" << actualExtent.width << " H:" << actualExtent.height << "\n";
 
     return actualExtent;
   }
@@ -1004,4 +1008,52 @@ inline void setImageLayout(
     1, &imageMemoryBarrier);
 }
 
+//Convert this coordinate system:
+// (0, 0)           (1280, 0)
+//  
+//        (640,360)         
+//
+// (0, 720)       (1280, 720)
+// To this:
+// (-1,-1)   -1   (1, -1)
+//  
+// -1         0         1
+//
+// (-1, 1)    1    (1, 1)
+inline void convertPixelToNormalizedDeviceCoord(VkExtent2D swapChainExtent, int x, int y) {
+  // float x_norm = 2.0f * x / swapChainExtent.width - 1.0f;
+  // float y_norm = 2.0f * y / swapChainExtent.height - 1.0f;
+
+  // std::cout << "NormX: " << x_norm << " NormY:" << y_norm << "\n";
+
+  //First get the min and max coord X and Y of Pixel vs Device
+  float xPixelMin = 0;
+  float xPixelMax = swapChainExtent.width;
+  float yPixelMin = 0;
+  float yPixelMax = swapChainExtent.height;
+
+  float xDeviceMin = -1;
+  float xDeviceMax = 1;
+  float yDeviceMin = -1;
+  float yDeviceMax = 1;
+
+  // Can first normalize the pixel coord space to 0, 1, by normalization by division of value by total size of coordinate
+  // e.g. x / (xmax - xmin)
+  // Then convert to new coordinate system by multiplying by new max
+  // e.g. newX * (newxmax - newxmin)
+  // Then translate by the minimum of new coordinate system
+  // e.g. finalX = newX + newxmin
+
+  // Or just calcuate ratios between pixel coord vs device coord
+  float xScalingFactor = (xDeviceMax - xDeviceMin) / (xPixelMax - xPixelMin);
+  float yScalingFactor = (yDeviceMax - yDeviceMin) / (yPixelMax - yPixelMin);
+
+  //Add the dest min to translate to device coord
+  float x_norm2 = x * xScalingFactor + xDeviceMin;
+  float y_norm2 = y * yScalingFactor + yDeviceMin;
+
+  std::cout << "NormX: " << x_norm2 << " NormY:" << y_norm2 << "\n";
+
+
+}
 } // namespace VulkanHelper

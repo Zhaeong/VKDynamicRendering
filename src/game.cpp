@@ -104,6 +104,10 @@ std::string Game::getEvent() {
 
     case SDL_MOUSEBUTTONDOWN:
       eventName = "MOUSE_DOWN";
+      int posX, posY;
+      SDL_GetMouseState(&posX, &posY);
+      std::cout << "MouseX: " << posX << " MouseY:" << posY << "\n";
+      VulkanHelper::convertPixelToNormalizedDeviceCoord(vulkanRenderer->mSwapChainExtent, posX, posY);
       break;
 
     case SDL_MOUSEBUTTONUP:

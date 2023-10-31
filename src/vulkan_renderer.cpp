@@ -25,7 +25,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
 
   mTextOverlay->beginTextUpdate();
-  mTextOverlay->addText("aaaabbb", 5.0f, 5.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("aaz", 0.0f, 0.0f, TextOverlay::alignLeft);
   mTextOverlay->endTextUpdate();
 
   createCommandPool();
