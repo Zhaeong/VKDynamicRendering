@@ -7,6 +7,10 @@
 
 #include <stb_font_consolas_24_latin1.inl>
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#define STBTT_STATIC
+#include "stb_truetype.h"
+
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
 class TextOverlay {
     private:
@@ -44,6 +48,10 @@ class TextOverlay {
         uint32_t mNumLetters;
         float mScale = 1.0f;
 	    stb_fontchar mSTBFontData[STB_FONT_consolas_24_latin1_NUM_CHARS];
+
+        unsigned char ttf_buffer[1<<20];
+        unsigned char temp_bitmap[1024*1024];
+        stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
 
     public:
         enum TextAlign { alignLeft, alignCenter, alignRight };
