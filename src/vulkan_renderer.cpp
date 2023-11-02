@@ -13,19 +13,14 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   pickPhysicalDevice();
   createLogicalDevice();
 
-  // createCommandPool();
-  // createCommandBuffers(MAX_FRAMES_IN_FLIGHT);
-  // createSyncObjects(MAX_FRAMES_IN_FLIGHT);
-
   createSwapChain(mSurface);
   createSwapChainImageViews();
 
-
   mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImageViews, mSwapChainImageFormat, mSwapChainExtent, mGraphicsQueue);
 
-
   mTextOverlay->beginTextUpdate();
-  mTextOverlay->addText("aaz", 0.0f, 0.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("aIs it working?", 0.0f, 0.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("could It BE", mSwapChainExtent.width, 0.0f, TextOverlay::alignRight);
   mTextOverlay->endTextUpdate();
 
   createCommandPool();

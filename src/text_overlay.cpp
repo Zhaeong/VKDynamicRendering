@@ -12,11 +12,14 @@ TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice
 
     mCommandBuffers.resize(mSwapChainImageViews.size());
 
+    // fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
+    std::filesystem::path p = std::filesystem::current_path();
+    fread(ttf_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/arial.ttf").c_str(), "rb"));
 
-    fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
-    stbtt_BakeFontBitmap(ttf_buffer,0, 64.0, temp_bitmap,1024,1024, 32,96, cdata);
-
-    std::cout << "test 0\n";
+    int res = stbtt_BakeFontBitmap(ttf_buffer, 0, 64.0, temp_bitmap, mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, cdata);
+    if(res == 0) {
+        std::cout << "Font loading failed\n";
+    }
 
     prepareResources();
     preparePipeline();
@@ -45,11 +48,8 @@ void TextOverlay::prepareResources(){
     // const uint32_t fontWidth = STB_FONT_consolas_24_latin1_BITMAP_WIDTH;
 	// const uint32_t fontHeight = STB_FONT_consolas_24_latin1_BITMAP_HEIGHT;
 
-    const uint32_t fontWidth = 1024;
-	const uint32_t fontHeight = 1024;
-
-	// static unsigned char font24pixels[STB_FONT_consolas_24_latin1_BITMAP_HEIGHT][STB_FONT_consolas_24_latin1_BITMAP_WIDTH];
-	// stb_font_consolas_24_latin1(mSTBFontData, font24pixels, fontHeight);
+    const uint32_t fontWidth = mBitmapWidth;
+	const uint32_t fontHeight = mBitmapHeight;
 
     //Command buffer
     VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
@@ -371,8 +371,6 @@ void TextOverlay::beginTextUpdate()
 // Add text to the current buffer
 void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
 {
-    const uint32_t firstChar = STB_FONT_consolas_24_latin1_FIRST_CHAR;
-
     assert(mMappedVertexBufferMemory != nullptr);
 
     const float charW = 1.5f * mScale / mSwapChainExtent.width;
@@ -387,12 +385,19 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
 
     // Calculate text width
     float textWidth = 0;
+    float maxYoff = 0;
     for (auto letter : text)
     {
-        // stb_fontchar *charData = &mSTBFontData[(uint32_t)letter - firstChar];
-        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - firstChar];
+        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - mFirstChar];
         textWidth += charData->xadvance * charW;
+
+        float yOff = std::abs(charData->yoff * charH);
+        if(yOff > maxYoff) {
+            maxYoff = yOff;
+        }
     }
+
+    y += maxYoff;
 
     switch (align)
     {
@@ -407,79 +412,61 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
     }
 
     // Generate a uv mapped quad per char in the new text
-    for (auto letter : text)
+    int i = 0;
+    for (int i = 0; i < text.length(); i++)
     {
-        std::cout << "=======================================Letter: " << letter << ":" << (uint32_t)letter << "===========\n";
-        stbtt_aligned_quad charQuad;
-        float xPos, yPos;        
-        stbtt_GetBakedQuad(cdata, 1024,1024, (uint32_t)letter-32, &xPos,&yPos,&charQuad,1);//1=opengl & d3d10+,0=d3d9
+        char letter = text[i];
+        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - mFirstChar];
 
-        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - firstChar];
+        // std::cout << "=======================================Letter:" << letter << ":" << (uint32_t)letter << "===========\n";
+        // std::cout << "xoff: " << charData->xoff << " yoff:" << charData->yoff << "\n";
 
-        mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
-        mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
-        mMappedVertexBufferMemory->z = charQuad.s0;
-        mMappedVertexBufferMemory->w = charQuad.t0;
-        std::cout << "1: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
+        // XY coordinates for character
+        float x0 = x + (charData->xoff * charW);
+        float x1 = x + (charData->x1 - charData->x0 + charData->xoff) * charW;
+        // std::cout << "x0: " << x0 << " x1:" << x1 << "\n";
+
+        float y0 = y + (charData->yoff * charH);
+        float y1 = y + (charData->y1 - charData->y0 + charData->yoff) * charH;
+        //  std::cout << "y0: " << y0 << " y1:" << y1 << "\n";
+
+        // UV coordinates for character
+        float z0 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->x0);
+        float z1 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->x1);
+
+        float w0 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y0);
+        float w1 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y1);
+
+        //Top left
+        mMappedVertexBufferMemory->x = x0;
+        mMappedVertexBufferMemory->y = y0;
+        mMappedVertexBufferMemory->z = z0;
+        mMappedVertexBufferMemory->w = w0;
         mMappedVertexBufferMemory++; 
 
-        mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
-        mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
-        mMappedVertexBufferMemory->z = charQuad.s1;
-        mMappedVertexBufferMemory->w = charQuad.t0;
+        //Top right
+        mMappedVertexBufferMemory->x = x1;
+        mMappedVertexBufferMemory->y = y0;
+        mMappedVertexBufferMemory->z = z1;
+        mMappedVertexBufferMemory->w = w0;
         mMappedVertexBufferMemory++; 
 
-        mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
-        mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
-        mMappedVertexBufferMemory->z = charQuad.s0;
-        mMappedVertexBufferMemory->w = charQuad.t1;
+        //Bottom left
+        mMappedVertexBufferMemory->x = x0;
+        mMappedVertexBufferMemory->y = y1;
+        mMappedVertexBufferMemory->z = z0;
+        mMappedVertexBufferMemory->w = w1;
         mMappedVertexBufferMemory++; 
 
-        mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
-        mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
-        mMappedVertexBufferMemory->z = charQuad.s1;
-        mMappedVertexBufferMemory->w = charQuad.t1;
-        // std::cout << "1: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
+        //Bottom right
+        mMappedVertexBufferMemory->x = x1;
+        mMappedVertexBufferMemory->y = y1;
+        mMappedVertexBufferMemory->z = z1;
+        mMappedVertexBufferMemory->w = w1;
         mMappedVertexBufferMemory++; 
 
+        // Advance the x val
         x += charData->xadvance * charW;
-
-
-
-        ///////////////////////////////////////
-
-
-        // stb_fontchar *charData = &mSTBFontData[(uint32_t)letter - firstChar];
-        // std::cout << "=======================================Letter: " << letter << "===========\n";
-        // mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
-        // mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
-        // mMappedVertexBufferMemory->z = charData->s0;
-        // mMappedVertexBufferMemory->w = charData->t0;
-        // std::cout << "1: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
-        // mMappedVertexBufferMemory++;        
-
-        // mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
-        // mMappedVertexBufferMemory->y = (y + (float)charData->y0 * charH);
-        // mMappedVertexBufferMemory->z = charData->s1;
-        // mMappedVertexBufferMemory->w = charData->t0;
-        // std::cout << "2: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
-        // mMappedVertexBufferMemory++;
-
-        // mMappedVertexBufferMemory->x = (x + (float)charData->x0 * charW);
-        // mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
-        // mMappedVertexBufferMemory->z = charData->s0;
-        // mMappedVertexBufferMemory->w = charData->t1;
-        // std::cout << "3: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
-        // mMappedVertexBufferMemory++;
-
-        // mMappedVertexBufferMemory->x = (x + (float)charData->x1 * charW);
-        // mMappedVertexBufferMemory->y = (y + (float)charData->y1 * charH);
-        // mMappedVertexBufferMemory->z = charData->s1;
-        // mMappedVertexBufferMemory->w = charData->t1;
-        // std::cout << "4: x:" << mMappedVertexBufferMemory->x << " y:" << mMappedVertexBufferMemory->y << " z:" << mMappedVertexBufferMemory->z << " w:"<< mMappedVertexBufferMemory->w  << "\n";
-        // mMappedVertexBufferMemory++;
-
-        // x += charData->advance * charW;
 
         mNumLetters++;
     }

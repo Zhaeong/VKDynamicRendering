@@ -1056,4 +1056,25 @@ inline void convertPixelToNormalizedDeviceCoord(VkExtent2D swapChainExtent, int 
 
 
 }
+
+inline float convertCoordinate(float srcMin, float srcMax, float dstMin, float dstMax, float srcVal) {
+
+  // Can first normalize the pixel coord space to 0, 1, by normalization by division of value by total size of coordinate
+  // e.g. x / (xmax - xmin)
+  // Then convert to new coordinate system by multiplying by new max
+  // e.g. newX * (newxmax - newxmin)
+  // Then translate by the minimum of new coordinate system
+  // e.g. finalX = newX + newxmin
+
+  // Or just calcuate ratios between pixel coord vs device coord
+  float xScalingFactor = (dstMax - dstMin) / (srcMax - srcMin);
+
+  //Add the dest min to translate to device coord
+  float dstVal = srcVal * xScalingFactor + dstMin;
+
+  return dstVal;
+
+
+}
+
 } // namespace VulkanHelper

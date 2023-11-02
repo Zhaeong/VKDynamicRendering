@@ -4,8 +4,7 @@
 
 #include <vulkan_helper.hpp>
 #include <vulkan_initializers.hpp>
-
-#include <stb_font_consolas_24_latin1.inl>
+#include <filesystem>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
@@ -47,7 +46,11 @@ class TextOverlay {
 	    glm::vec4 *mMappedVertexBufferMemory = nullptr;
         uint32_t mNumLetters;
         float mScale = 1.0f;
-	    stb_fontchar mSTBFontData[STB_FONT_consolas_24_latin1_NUM_CHARS];
+
+        const int mBitmapHeight = 1024;
+        const int mBitmapWidth = 1024;
+        const int mFirstChar = 32;
+        const int mNumChar = 96;
 
         unsigned char ttf_buffer[1<<20];
         unsigned char temp_bitmap[1024*1024];
