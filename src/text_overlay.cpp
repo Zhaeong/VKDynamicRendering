@@ -12,15 +12,6 @@ TextOverlay::TextOverlay(VkPhysicalDevice physicalDevice, VkDevice logicalDevice
 
     mCommandBuffers.resize(mSwapChainImageViews.size());
 
-    // fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
-    std::filesystem::path p = std::filesystem::current_path();
-    fread(ttf_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/arial.ttf").c_str(), "rb"));
-
-    int res = stbtt_BakeFontBitmap(ttf_buffer, 0, 64.0, temp_bitmap, mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, cdata);
-    if(res == 0) {
-        std::cout << "Font loading failed\n";
-    }
-
     prepareResources();
     preparePipeline();
 }
@@ -45,11 +36,16 @@ TextOverlay::~TextOverlay(){
 
 void TextOverlay::prepareResources(){
 
-    // const uint32_t fontWidth = STB_FONT_consolas_24_latin1_BITMAP_WIDTH;
-	// const uint32_t fontHeight = STB_FONT_consolas_24_latin1_BITMAP_HEIGHT;
+    unsigned char temp_bitmap[1024*1024];
 
-    const uint32_t fontWidth = mBitmapWidth;
-	const uint32_t fontHeight = mBitmapHeight;
+    // fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
+    std::filesystem::path p = std::filesystem::current_path();
+    fread(mTTF_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/arial.ttf").c_str(), "rb"));
+
+    int res = stbtt_BakeFontBitmap(mTTF_buffer, 0, mFontSize, temp_bitmap, mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, mCharData);
+    if(res == 0) {
+        std::cout << "Font loading failed\n";
+    }
 
     //Command buffer
     VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
@@ -78,8 +74,8 @@ void TextOverlay::prepareResources(){
     VkImageCreateInfo imageInfo = VulkanInit::image_create_info();
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.format = VK_FORMAT_R8_UNORM;
-    imageInfo.extent.width = fontWidth;
-    imageInfo.extent.height = fontHeight;
+    imageInfo.extent.width = mBitmapWidth;
+    imageInfo.extent.height = mBitmapHeight;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 1;
@@ -99,7 +95,6 @@ void TextOverlay::prepareResources(){
 	VK_CHECK(vkBindImageMemory(mLogicalDevice, mImage, mImageMemory, 0),"vkBindImageMemory");
 
     // Staging
-
     struct {
         VkDeviceMemory memory;
         VkBuffer buffer;
@@ -122,13 +117,10 @@ void TextOverlay::prepareResources(){
 
     uint8_t *data;
     VK_CHECK(vkMapMemory(mLogicalDevice, stagingBuffer.memory, 0, memAllocInfo.allocationSize, 0, (void **)&data), "vkMapMemory");
+
     // Size of the font texture is WIDTH * HEIGHT * 1 byte (only one channel)
+    memcpy(data, &temp_bitmap[0], mBitmapWidth * mBitmapHeight);
 
-    // memcpy(data, &font24pixels[0][0], fontWidth * fontHeight);
-
-    memcpy(data, &temp_bitmap[0], fontWidth * fontHeight);
-
-    std::cout << "test 2\n";
     vkUnmapMemory(mLogicalDevice, stagingBuffer.memory);
 
     // Copy to image
@@ -152,8 +144,8 @@ void TextOverlay::prepareResources(){
     bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     bufferCopyRegion.imageSubresource.mipLevel = 0;
     bufferCopyRegion.imageSubresource.layerCount = 1;
-    bufferCopyRegion.imageExtent.width = fontWidth;
-    bufferCopyRegion.imageExtent.height = fontHeight;
+    bufferCopyRegion.imageExtent.width = mBitmapWidth;
+    bufferCopyRegion.imageExtent.height = mBitmapHeight;
     bufferCopyRegion.imageExtent.depth = 1;
 
     vkCmdCopyBufferToImage(
@@ -388,7 +380,7 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
     float maxYoff = 0;
     for (auto letter : text)
     {
-        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - mFirstChar];
+        stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
         textWidth += charData->xadvance * charW;
 
         float yOff = std::abs(charData->yoff * charH);
@@ -416,7 +408,7 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
     for (int i = 0; i < text.length(); i++)
     {
         char letter = text[i];
-        stbtt_bakedchar *charData = &cdata[(uint32_t)letter - mFirstChar];
+        stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
 
         // std::cout << "=======================================Letter:" << letter << ":" << (uint32_t)letter << "===========\n";
         // std::cout << "xoff: " << charData->xoff << " yoff:" << charData->yoff << "\n";

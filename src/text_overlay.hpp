@@ -49,12 +49,12 @@ class TextOverlay {
 
         const int mBitmapHeight = 1024;
         const int mBitmapWidth = 1024;
+        const float mFontSize = 32.0;
         const int mFirstChar = 32;
         const int mNumChar = 96;
 
-        unsigned char ttf_buffer[1<<20];
-        unsigned char temp_bitmap[1024*1024];
-        stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+        unsigned char mTTF_buffer[1<<20];
+        stbtt_bakedchar mCharData[96]; // ASCII 32..126 is 95 glyphs
 
     public:
         enum TextAlign { alignLeft, alignCenter, alignRight };
