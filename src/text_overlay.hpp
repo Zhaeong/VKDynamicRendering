@@ -54,7 +54,12 @@ class TextOverlay {
         const int mNumChar = 96;
 
         unsigned char mTTF_buffer[1<<20];
-        stbtt_bakedchar mCharData[96]; // ASCII 32..126 is 95 glyphs
+
+        // For using with stbtt_BakeFontBitmap
+        // stbtt_bakedchar mCharData[96]; // ASCII 32..126 is 95 glyphs
+
+        // For using with stbtt_PackFontRange
+        stbtt_packedchar mCharData[96];
 
     public:
         enum TextAlign { alignLeft, alignCenter, alignRight };

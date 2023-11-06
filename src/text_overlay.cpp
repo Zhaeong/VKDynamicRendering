@@ -36,16 +36,25 @@ TextOverlay::~TextOverlay(){
 
 void TextOverlay::prepareResources(){
 
-    unsigned char temp_bitmap[1024*1024];
+    stbtt_pack_context pc;
+    // unsigned char temp_bitmap[1024*1024];
+    unsigned char temp_bitmap[mBitmapWidth][mBitmapHeight];
 
     // fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
     std::filesystem::path p = std::filesystem::current_path();
-    fread(mTTF_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/arial.ttf").c_str(), "rb"));
+    fread(mTTF_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/Afacad-Regular.ttf").c_str(), "rb"));
 
-    int res = stbtt_BakeFontBitmap(mTTF_buffer, 0, mFontSize, temp_bitmap, mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, mCharData);
+    // int res = stbtt_BakeFontBitmap(mTTF_buffer, 0, mFontSize, temp_bitmap[0], mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, mCharData);
+    int res = stbtt_PackBegin(&pc, temp_bitmap[0], mBitmapWidth, mBitmapHeight, 0, 1, NULL);
+
     if(res == 0) {
         std::cout << "Font loading failed\n";
     }
+
+    //ToDo: Oversampling reference: https://github.com/nothings/stb/blob/master/tests/oversample/main.c
+    stbtt_PackFontRange(&pc, mTTF_buffer, 0, mFontSize, mFirstChar, mNumChar, mCharData);
+    stbtt_PackEnd(&pc);
+
 
     //Command buffer
     VkCommandPoolCreateInfo poolInfo = VulkanInit::command_pool_create_info();
@@ -380,7 +389,8 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
     float maxYoff = 0;
     for (auto letter : text)
     {
-        stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
+        // stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
+        stbtt_packedchar  *charData = &mCharData[(uint32_t)letter - mFirstChar];
         textWidth += charData->xadvance * charW;
 
         float yOff = std::abs(charData->yoff * charH);
@@ -408,7 +418,8 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
     for (int i = 0; i < text.length(); i++)
     {
         char letter = text[i];
-        stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
+        // stbtt_bakedchar *charData = &mCharData[(uint32_t)letter - mFirstChar];
+        stbtt_packedchar  *charData = &mCharData[(uint32_t)letter - mFirstChar];
 
         // std::cout << "=======================================Letter:" << letter << ":" << (uint32_t)letter << "===========\n";
         // std::cout << "xoff: " << charData->xoff << " yoff:" << charData->yoff << "\n";
@@ -428,6 +439,20 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
 
         float w0 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y0);
         float w1 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y1);
+
+        // render full font bitmap atlas
+        // float x0 = -1.0f;
+        // float x1 = 1.0f;
+
+        // float y0 = -1.0f;
+        // float y1 = 1.0f;
+
+        // float z0 = 0.0f;
+        // float z1 = 1.0f;
+
+        // float w0 = 0.0;
+        // float w1 = 1.0f;
+
 
         //Top left
         mMappedVertexBufferMemory->x = x0;
@@ -461,6 +486,8 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         x += charData->xadvance * charW;
 
         mNumLetters++;
+
+        // return;
     }
 }
 
