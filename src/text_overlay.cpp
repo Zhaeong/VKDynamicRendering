@@ -424,7 +424,7 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         // std::cout << "=======================================Letter:" << letter << ":" << (uint32_t)letter << "===========\n";
         // std::cout << "xoff: " << charData->xoff << " yoff:" << charData->yoff << "\n";
 
-        // XY coordinates for character
+        // // XY coordinates for character
         float x0 = x + (charData->xoff * charW);
         float x1 = x + (charData->x1 - charData->x0 + charData->xoff) * charW;
         // std::cout << "x0: " << x0 << " x1:" << x1 << "\n";
@@ -437,10 +437,10 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         float z0 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->x0);
         float z1 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->x1);
 
-        float w0 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y0);
-        float w1 = VulkanHelper::convertCoordinate(0,mBitmapWidth,0,1, charData->y1);
+        float w0 = VulkanHelper::convertCoordinate(0,mBitmapHeight,0,1, charData->y0);
+        float w1 = VulkanHelper::convertCoordinate(0,mBitmapHeight,0,1, charData->y1);
 
-        // render full font bitmap atlas
+        // // render full font bitmap atlas
         // float x0 = -1.0f;
         // float x1 = 1.0f;
 
