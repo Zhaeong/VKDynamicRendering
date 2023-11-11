@@ -11,6 +11,7 @@
 #include <filesystem>
 
 #define GLM_FORCE_RADIANS
+// #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
@@ -95,6 +96,13 @@ public:
 
 
   TextOverlay *mTextOverlay;
+
+
+  //===================================================
+  float mCameraPosX = 0.0f;
+  float mCameraPosY = 0.0f;
+  float mCameraPosZ = 2.0f;
+
 
   //===================================================
   // Functions

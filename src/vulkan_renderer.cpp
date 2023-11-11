@@ -333,7 +333,7 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
         VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
     renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    VkClearValue clearColor = {{{0.2f, 0.2f, 0.2f, 1.0f}}};
     renderingColorAttachmentInfo.clearValue = clearColor;
 
     VkRenderingInfoKHR renderingInfo{};
@@ -888,16 +888,45 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
 
   Utils::UniformBufferObject ubo{};
-  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                          glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.view =
-      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, 1.0f));
 
-  ubo.proj = glm::perspective(glm::radians(45.0f),
-                              mSwapChainExtent.width /
-                                  (float)mSwapChainExtent.height,
-                              0.1f, 10.0f);
+  //The position of the model in world space
+  glm::mat4 myIdentityMatrix = glm::mat4(1.0f);
+  // ubo.model = glm::rotate(myIdentityMatrix, time * glm::radians(90.0f),
+  //                         glm::vec3(0.0f, 0.0f, 1.0f));
+  // ubo.model = glm::scale(myIdentityMatrix, glm::vec3(20.0f, 20.0f ,20.0f)); //The position of the model in world space
+  ubo.model = myIdentityMatrix;
+
+
+
+  ubo.view = glm::lookAt(
+    glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ),  // The position of the camera in world space
+    glm::vec3(0.0f, 0.0f, 0.0f),  // The location you want to look at
+    glm::vec3(0.0f, 1.0f, 0.0f)); // The up vector, how camera is orientated
+
+  // setting camera pos to (0, 0, 2) and looking at (0, 0, 0) means it's directly over the model
+  // and setting the up vector to be +x means it's seeing it directly on the model
+  // that means it's basically what it looks like without and MVP transformations, useful for a 1-1 mapping of model to camera space
+
+
+  mTextOverlay->beginTextUpdate();
+  mTextOverlay->addText("Camera- X:" + std::to_string(mCameraPosX) + 
+                        " Y:"  + std::to_string(mCameraPosY) + 
+                        " Z:"  + std::to_string(mCameraPosZ), 0.0f, 0.0f, TextOverlay::alignLeft);
+  mTextOverlay->endTextUpdate();
+
+  ubo.proj = glm::perspective(
+    glm::radians(45.0f), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+    mSwapChainExtent.width / (float)mSwapChainExtent.height, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960
+    0.1f, // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+    10.0f); // Far clipping plane. Keep as little as possible.
+
+  // Or, for an ortho camera :
+  // ubo.proj = glm::ortho(-2.0f, // left
+  //                       2.0f,  // right
+  //                       -2.0f,  // bottom
+  //                       2.0f, // up
+  //                       -5.0f, // near
+  //                       5.0f); // far
 
   //ubo.proj[1][1] *= -1;
 

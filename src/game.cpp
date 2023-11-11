@@ -80,16 +80,37 @@ std::string Game::getEvent() {
       case SDLK_w: {
         eventName = "KEY_W";
         std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosY += 0.1f;
         break;
       }
       case SDLK_s: {
         eventName = "KEY_S";
         std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosY -= 0.1f;
         break;
       }
-      case SDLK_c: {
-        eventName = "KEY_C";
+      case SDLK_a: {
+        eventName = "KEY_A";
         std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosX -= 0.1f;
+        break;
+      }
+      case SDLK_d: {
+        eventName = "KEY_D";
+        std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosX += 0.1f;
+        break;
+      }
+      case SDLK_z: {
+        eventName = "KEY_z";
+        std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosZ -= 0.1f;
+        break;
+      }
+      case SDLK_x: {
+        eventName = "KEY_x";
+        std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraPosZ += 0.1f;
         break;
       }
       default:
