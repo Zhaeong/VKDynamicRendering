@@ -75,8 +75,8 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   createVertexBuffer(vertices);
   //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-  mIndices = {0, 1, 2, 2, 3, 0,
-              4, 5, 6, 6, 7, 4};
+  mIndices = {0, 1, 2, 3, 0, 2,
+              4, 5, 6, 7, 4, 6};
   // mIndices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
   createIndexBuffer(mIndices);
@@ -504,12 +504,11 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pInputAssemblyState
   //================================================================================================
-  VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-  inputAssembly.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-  inputAssembly.primitiveRestartEnable = VK_FALSE;
-  PIPElineInfo.pInputAssemblyState = &inputAssembly;
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = 
+    VulkanInit::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
+
+  PIPElineInfo.pInputAssemblyState = &inputAssemblyState;
+
   //================================================================================================
   // pViewportState
   //================================================================================================
@@ -525,11 +524,9 @@ void VulkanRenderer::createGraphicsPipeline() {
   scissor.offset = {0, 0};
   scissor.extent = mSwapChainExtent;
 
-  VkPipelineViewportStateCreateInfo viewportState{};
-  viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-  viewportState.viewportCount = 1;
+  //Can also be set in rendering command buffer if not here
+  VkPipelineViewportStateCreateInfo viewportState = VulkanInit::pipeline_viewport_state_create_Info(1, 1, 0);
   viewportState.pViewports = &viewport;
-  viewportState.scissorCount = 1;
   viewportState.pScissors = &scissor;
 
   PIPElineInfo.pViewportState = &viewportState;
@@ -537,27 +534,30 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pRasterizationState
   //================================================================================================
-  VkPipelineRasterizationStateCreateInfo rasterizer{};
-  rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterizer.depthClampEnable = VK_FALSE;
+  // VkPipelineRasterizationStateCreateInfo rasterizer{};
+  // rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  // rasterizer.depthClampEnable = VK_FALSE;
 
-  // Setting this to true disables output to framebuffer
+  // // Setting this to true disables output to framebuffer
+  // // rasterizer.rasterizerDiscardEnable = VK_FALSE;
   // rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+  // rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 
-  rasterizer.lineWidth = 1.0f;
+  // rasterizer.lineWidth = 1.0f;
 
-  rasterizer.cullMode = VK_CULL_MODE_NONE;
-  // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  // rasterizer.cullMode = VK_CULL_MODE_NONE;
+  // // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+  // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
-  rasterizer.depthBiasEnable = VK_FALSE;
-  rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-  rasterizer.depthBiasClamp = 0.0f;          // Optional
-  rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
+  // rasterizer.depthBiasEnable = VK_FALSE;
+  // rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+  // rasterizer.depthBiasClamp = 0.0f;          // Optional
+  // rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
 
-  PIPElineInfo.pRasterizationState = &rasterizer;
+  VkPipelineRasterizationStateCreateInfo rasterizationState = 
+    VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+
+  PIPElineInfo.pRasterizationState = &rasterizationState;
   //================================================================================================
   // pMultisampleState
   //================================================================================================
@@ -895,8 +895,6 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   //                         glm::vec3(0.0f, 0.0f, 1.0f));
   // ubo.model = glm::scale(myIdentityMatrix, glm::vec3(20.0f, 20.0f ,20.0f)); //The position of the model in world space
   ubo.model = myIdentityMatrix;
-
-
 
   ubo.view = glm::lookAt(
     glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ),  // The position of the camera in world space

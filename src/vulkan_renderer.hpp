@@ -124,6 +124,7 @@ public:
   // Swapchain
   void createSwapChain(VkSurfaceKHR surface);
   void createSwapChainImageViews();
+  void recreateSwapChain();
 
   //DescriptorSetLayout, pipelineLayout
   void setupDescriptorSetLayout();
