@@ -1077,4 +1077,23 @@ inline float convertCoordinate(float srcMin, float srcMax, float dstMin, float d
 
 }
 
+inline float calculateTriangleFaceDirection(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2) {
+  /*
+  https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkFrontFace.html
+(-1/2)  ( ((p0.x)(p1.y) - (p1.x)(p0.y)) + ((p1.x)(p2.y) - (p2.x)(p1.y)) + ((p2.x)(p0.y) - (p0.x)(p2.y)) )
+(-1/2)  ( ((-0.5)(-0.5) - (0.5)(-0.5)) + ((0.5)(0.5) - (0.5)(-0.5)) + ((0.5)(-0.5) - (-0.5)(0.5)) )
+  */
+  float sum1 = (p0.x * p1.y) - (p1.x * p0.y);
+  float sum2 = (p1.x * p2.y) - (p2.x * p1.y);
+  float sum3 = (p2.x * p0.y) - (p0.x * p2.y);
+  
+  std::cout << "sum1:" << sum1 << " sum2:" << sum2 << " sum3:" << sum3 << "\n";
+  float resval = (-0.5) * (sum1 + sum2 + sum3);
+  std::cout << "TriVal: " << resval << "\n";
+  return resval;
+
+
+
+}
+
 } // namespace VulkanHelper

@@ -453,6 +453,16 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         // float w0 = 0.0;
         // float w1 = 1.0f;
 
+        // 4 vertices per quad, able to do this to draw two triangles due to 
+        // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP mode in VkPipelineInputAssemblyStateCreateInfo
+        // the second and third vertex of every triangle are used as first two vertices of the next triangle
+        // Z pattern of drawing due to the way primitives are assembled via:
+        //pi = {vi, v(i+(1+i%2)), v(i+(2-i%2))}
+        //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
+        //p0 = {v0, v1, v2} == {0, 1, 2}
+
+        //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
+        //p1 = {v1, v3, v2} == {1, 3, 2}
 
         //Top left
         mMappedVertexBufferMemory->x = x0;

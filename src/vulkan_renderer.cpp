@@ -72,12 +72,40 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
                                          };  //bottom left
 
                                          
+  //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
+  //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
+  //p0 = {v0, v1, v2}
 
+  //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
+  //p1 = {v1, v3, v2}
+  
   createVertexBuffer(vertices);
   //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-  mIndices = {0, 1, 2, 3, 0, 2,
-              4, 5, 6, 7, 4, 6};
-  // mIndices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
+  // mIndices = {0, 1, 2, 3, 0, 2,
+  //             4, 5, 6, 7, 4, 6};
+
+  //mIndices = {0, 1, 2, 2, 3, 0};
+  mIndices = {0, 1, 3, 2};
+  //The two primitives created by {0, 1, 2, 3} is as follows:
+  //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
+  //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
+  //p0 = {v0, v1, v2} == {0, 1, 2}
+
+  //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
+  //p1 = {v1, v3, v2} == {1, 3, 2}
+
+  //So plugging this {0, 1, 3, 2}
+  //p0 = {v0, v1, v2} == {0, 1, 3}
+  //p1 = {v1, v3, v2} == {1, 2, 3}
+
+
+  glm::vec3 p0 = {-0.5f, -0.5f, 0.0f};
+  glm::vec3 p1 = {0.5f, -0.5f, 0.0f};
+  glm::vec3 p2 = {0.5f, 0.5f, 0.0f};
+  glm::vec3 p3 = {-0.5f, 0.5f, 0.0f};
+
+  VulkanHelper::calculateTriangleFaceDirection(p0, p1, p2); 
+  VulkanHelper::calculateTriangleFaceDirection(p1, p2, p3); 
 
   createIndexBuffer(mIndices);
 
@@ -348,6 +376,12 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
 
     vkCmdBeginRendering(mDrawingCommandBuffers[i], &renderingInfo);
 
+
+    // drawFromVertices(mDrawingCommandBuffers[i],
+    //                                   mGraphicsPipeline,
+    //                                   mVertices,
+    //                                   mVertexBuffer);
+
     drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices,
                     mIndices, mVertexBuffer, mIndexBuffer);
 
@@ -504,6 +538,12 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pInputAssemblyState
   //================================================================================================
+
+  // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP is usefull for drawing quads, e.g.
+  // mIndices = {1, 2, 0, 3};
+  // the second and third vertex of every triangle are used as first two vertices of the next triangle
+  // will draw the same as 
+  // mIndices = {0, 1, 2, 2, 3, 0}; in VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST mode
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = 
     VulkanInit::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
 
@@ -534,26 +574,6 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pRasterizationState
   //================================================================================================
-  // VkPipelineRasterizationStateCreateInfo rasterizer{};
-  // rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  // rasterizer.depthClampEnable = VK_FALSE;
-
-  // // Setting this to true disables output to framebuffer
-  // // rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  // rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  // rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-
-  // rasterizer.lineWidth = 1.0f;
-
-  // rasterizer.cullMode = VK_CULL_MODE_NONE;
-  // // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-
-  // rasterizer.depthBiasEnable = VK_FALSE;
-  // rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-  // rasterizer.depthBiasClamp = 0.0f;          // Optional
-  // rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
-
   VkPipelineRasterizationStateCreateInfo rasterizationState = 
     VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
@@ -949,9 +969,15 @@ void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          mPipelineLayout, 0, 1,
+                          &mDescriptorSets[mTextures[0].descriptor_set_index], 0,
+                          nullptr);
+
+
   std::cout << "Drawing: " << vertices.size() << " Vertices\n";
 
-  vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+  vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 }
 
 void VulkanRenderer::drawFromIndices(VkCommandBuffer commandBuffer,
@@ -997,15 +1023,15 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 
   //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
   //first rect
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, 4, 1, 0, 0, 0);
 
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          mPipelineLayout, 0, 1,
-                          &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
-                          nullptr);
+  // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                         mPipelineLayout, 0, 1,
+  //                         &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
+  //                         nullptr);
 
-  //second rect
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
+  // //second rect
+  // vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
 
 }
 
