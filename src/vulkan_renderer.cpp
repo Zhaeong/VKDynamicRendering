@@ -65,10 +65,10 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
                                          {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
                                          {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
 
-                                         {{-0.5f, -0.5f, 0.2f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, 
-                                         {{0.5f, -0.5f, 0.2f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  
-                                         {{0.5f, 0.5f, 0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
-                                         {{-0.5f, 0.5f, 0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
+                                         {{-0.5f, -0.5f, -0.2f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, 
+                                         {{0.5f, -0.5f, -0.2f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  
+                                         {{0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
+                                         {{-0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
                                          };  //bottom left
 
                                          
@@ -372,6 +372,9 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     renderingInfo.layerCount = 1;
     renderingInfo.colorAttachmentCount = 1;
     renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
+    //Can add depth attachment here for depth buffering
+
+  
     // dynamic rendering end
     //===============================================================
 
@@ -895,6 +898,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ),  // The position of the camera in world space
     glm::vec3(0.0f, 0.0f, 0.0f),  // The location you want to look at
     glm::vec3(0.0f, 1.0f, 0.0f)); // The up vector, how camera is orientated
+    // glm::vec3(0.0f, 0.0f, 1.0f)); // The up vector, how camera is orientated
 
   // setting camera pos to (0, 0, 2) and looking at (0, 0, 0) means it's directly over the model
   // and setting the up vector to be +x means it's seeing it directly on the model
