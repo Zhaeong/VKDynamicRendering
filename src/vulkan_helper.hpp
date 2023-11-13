@@ -525,9 +525,7 @@ inline void endDrawingCommandBuffer(VkCommandBuffer commandBuffer,
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  if (vkQueueSubmit(submitQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
-    throw std::runtime_error("failed to submit draw command buffer!");
-  }
+  VK_CHECK(vkQueueSubmit(submitQueue, 1, &submitInfo, inFlightFence), "endDrawingCommandBuffer");
 }
 
 inline void submitCommandBuffers(std::vector<VkCommandBuffer> commandBuffers,
@@ -554,9 +552,7 @@ inline void submitCommandBuffers(std::vector<VkCommandBuffer> commandBuffers,
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  if (vkQueueSubmit(submitQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
-    throw std::runtime_error("failed to submit draw command buffer!");
-  }
+  VK_CHECK(vkQueueSubmit(submitQueue, 1, &submitInfo, inFlightFence), "submitCommandBuffers");
 }
 
 inline void copyBuffer(VkDevice device, VkCommandPool commandPool,

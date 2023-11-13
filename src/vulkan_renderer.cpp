@@ -81,10 +81,10 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   
   createVertexBuffer(vertices);
   //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-  // mIndices = {0, 1, 2, 3, 0, 2,
-  //             4, 5, 6, 7, 4, 6};
+  mIndices = {0, 1, 2, 2, 3, 0,
+              4, 5, 6, 6, 7, 4};
 
-  mIndices = {0, 1, 2, 2, 3, 0};
+  // mIndices = {0, 1, 2, 2, 3, 0};
 
   //VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP for generating two triangles
   // mIndices = {0, 1, 3, 2};
@@ -468,6 +468,7 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
     throw std::runtime_error("failed to create swap chain!");
   }
 
+  mSwapChainImages.clear();
   vkGetSwapchainImagesKHR(mLogicalDevice, mSwapChain, &mSwapChainImageCount,
                           nullptr);
   mSwapChainImages.resize(mSwapChainImageCount);
@@ -478,6 +479,7 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
 }
 
 void VulkanRenderer::createSwapChainImageViews() {
+  mSwapChainImageViews.clear();
   mSwapChainImageViews.resize(mSwapChainImages.size());
 
   std::cout << "swapchain Image View Format: " << mSwapChainImageFormat << "\n";
@@ -590,23 +592,10 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pDepthStencilState
   //================================================================================================
+  VkPipelineDepthStencilStateCreateInfo  depthStencilState = 
+  VulkanInit::pipeline_depthstencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
 
-  VkPipelineDepthStencilStateCreateInfo depthStencil{};
-  depthStencil.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = VK_TRUE;
-  depthStencil.depthWriteEnable = VK_TRUE;
-  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.minDepthBounds = 0.0f; // Optional
-  depthStencil.maxDepthBounds = 1.0f; // Optional
-
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.front = {}; // Optional
-  depthStencil.back = {};  // Optional
-
-  PIPElineInfo.pDepthStencilState = &depthStencil; // Optional
+  PIPElineInfo.pDepthStencilState = &depthStencilState;
   //================================================================================================
   // pColorBlendState
   //================================================================================================
@@ -622,19 +611,10 @@ void VulkanRenderer::createGraphicsPipeline() {
   colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
   colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
 
-  VkPipelineColorBlendStateCreateInfo colorBlending{};
-  colorBlending.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  colorBlending.logicOpEnable = VK_FALSE;
-  colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
-  colorBlending.blendConstants[0] = 0.0f; // Optional
-  colorBlending.blendConstants[1] = 0.0f; // Optional
-  colorBlending.blendConstants[2] = 0.0f; // Optional
-  colorBlending.blendConstants[3] = 0.0f; // Optional
+  VkPipelineColorBlendStateCreateInfo colorBlendState = 
+    VulkanInit::pipeline_colorblend_state_create_info(1, &colorBlendAttachment);
 
-  PIPElineInfo.pColorBlendState = &colorBlending;
+  PIPElineInfo.pColorBlendState = &colorBlendState;
   //================================================================================================
 
   PIPElineInfo.pDynamicState = nullptr; // Optional
@@ -920,7 +900,6 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // and setting the up vector to be +x means it's seeing it directly on the model
   // that means it's basically what it looks like without and MVP transformations, useful for a 1-1 mapping of model to camera space
 
-
   mTextOverlay->beginTextUpdate();
   mTextOverlay->addText("Camera- X:" + std::to_string(mCameraPosX) + 
                         " Y:"  + std::to_string(mCameraPosY) + 
@@ -941,8 +920,6 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   //                       -5.0f, // near
   //                       5.0f); // far
 
-  //ubo.proj[1][1] *= -1;
-
   void *data;
   vkMapMemory(mLogicalDevice,
               mUniformBuffersMemory[currentImage], 0, sizeof(ubo),
@@ -952,6 +929,41 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
                 mUniformBuffersMemory[currentImage]);
 }
 
+void VulkanRenderer::cleanupSwapChain() {
+  vkDestroyPipeline(mLogicalDevice, mGraphicsPipeline, nullptr);
+
+  for (size_t i = 0; i < mSwapChainImageViews.size(); i++) {
+    vkDestroyImageView(mLogicalDevice, mSwapChainImageViews[i], nullptr);
+  }
+
+  vkDestroySwapchainKHR(mLogicalDevice, mSwapChain, nullptr);
+
+}
+
+void VulkanRenderer::recreateSwapChain() {
+  Uint32 flags = SDL_GetWindowFlags(mWindow);
+  Utils::showWindowFlags(flags);
+
+  // don't recreate swapchain if minimized
+  while (flags & SDL_WINDOW_MINIMIZED) {
+    flags = SDL_GetWindowFlags(mWindow);
+    SDL_Event event;
+    SDL_WaitEvent(&event);
+  }
+  vkDeviceWaitIdle(mLogicalDevice);
+  cleanupSwapChain();
+
+  createSwapChain(mSurface);
+  createSwapChainImageViews();
+
+  delete mTextOverlay;
+  mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImageViews, mSwapChainImageFormat, mSwapChainExtent, mGraphicsQueue);
+
+  createGraphicsPipeline();
+
+  buildDrawingCommandBuffers();
+
+}
 
 void VulkanRenderer::drawFromVertices(VkCommandBuffer commandBuffer,
                                       VkPipeline graphicsPipeline,
@@ -1020,13 +1032,13 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
   //first rect
   vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
-  // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                         mPipelineLayout, 0, 1,
-  //                         &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
-  //                         nullptr);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          mPipelineLayout, 0, 1,
+                          &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
+                          nullptr);
 
-  // //second rect
-  // vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
+  //second rect
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
 
 }
 
@@ -1041,7 +1053,7 @@ void VulkanRenderer::drawFrame() {
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     std::cout << "Recreating Swapchain\n";
-    // recreateSwapChain();
+    recreateSwapChain();
     return;
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("failed to acquire swap chain image!");
@@ -1089,8 +1101,8 @@ void VulkanRenderer::drawFrame() {
   presentInfo.pResults = resultsArray.data(); // Optional
   result = vkQueuePresentKHR(mPresentQueue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-    std::cout << "Need to recreate swapchain\n";
-    // recreateSwapChain();
+    std::cout << "drawFrame Need to recreate swapchain\n";
+    recreateSwapChain();
   } else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image!");
   }
