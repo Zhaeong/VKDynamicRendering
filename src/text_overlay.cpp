@@ -424,7 +424,8 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         // std::cout << "=======================================Letter:" << letter << ":" << (uint32_t)letter << "===========\n";
         // std::cout << "xoff: " << charData->xoff << " yoff:" << charData->yoff << "\n";
 
-        // // XY coordinates for character
+        // XY coordinates for character
+        // Top left, Top right
         float x0 = x + (charData->xoff * charW);
         float x1 = x + (charData->x1 - charData->x0 + charData->xoff) * charW;
         // std::cout << "x0: " << x0 << " x1:" << x1 << "\n";
@@ -459,10 +460,24 @@ void TextOverlay::addText(std::string text, float x, float y, TextAlign align)
         // Z pattern of drawing due to the way primitives are assembled via:
         //pi = {vi, v(i+(1+i%2)), v(i+(2-i%2))}
         //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
-        //p0 = {v0, v1, v2} == {0, 1, 2}
+        //p0 = {v0, v1, v2}
 
         //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
-        //p1 = {v1, v3, v2} == {1, 3, 2}
+        //p1 = {v1, v3, v2}
+
+        //   0 ------ 1
+        //   |        |
+        //   3 ------ 2
+        //so z pattern achieved via {0, 1, 3, 2};
+        //v0 = 0
+        //v1 = 1
+        //v2 = 3
+        //v3 = 2
+
+        //p0 = {v0, v1, v2} == {0, 1, 3}
+        //p1 = {v1, v3, v2} == {1, 2, 3}
+
+        //Two Clockwise triangles
 
         //Top left
         mMappedVertexBufferMemory->x = x0;

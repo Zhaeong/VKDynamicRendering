@@ -1090,9 +1090,11 @@ inline float calculateTriangleFaceDirection(glm::vec3 p0, glm::vec3 p1, glm::vec
   std::cout << "sum1:" << sum1 << " sum2:" << sum2 << " sum3:" << sum3 << "\n";
   float resval = (-0.5) * (sum1 + sum2 + sum3);
   std::cout << "TriVal: " << resval << "\n";
+
+  // VK_FRONT_FACE_COUNTER_CLOCKWISE specifies that a triangle with positive area is considered front-facing.
+  // VK_FRONT_FACE_CLOCKWISE specifies that a triangle with negative area is considered front-facing.
+
   return resval;
-
-
 
 }
 

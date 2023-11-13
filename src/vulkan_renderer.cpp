@@ -84,8 +84,10 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   // mIndices = {0, 1, 2, 3, 0, 2,
   //             4, 5, 6, 7, 4, 6};
 
-  //mIndices = {0, 1, 2, 2, 3, 0};
-  mIndices = {0, 1, 3, 2};
+  mIndices = {0, 1, 2, 2, 3, 0};
+
+  //VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP for generating two triangles
+  // mIndices = {0, 1, 3, 2};
   //The two primitives created by {0, 1, 2, 3} is as follows:
   //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
   //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
@@ -94,18 +96,17 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
   //p1 = {v1, v3, v2} == {1, 3, 2}
 
-  //So plugging this {0, 1, 3, 2}
+  //So plugging this {0, 1, 3, 2} give the correct two clockwise triangles
   //p0 = {v0, v1, v2} == {0, 1, 3}
   //p1 = {v1, v3, v2} == {1, 2, 3}
 
+  // glm::vec3 p0 = {-0.5f, -0.5f, 0.0f};
+  // glm::vec3 p1 = {0.5f, -0.5f, 0.0f};
+  // glm::vec3 p2 = {0.5f, 0.5f, 0.0f};
+  // glm::vec3 p3 = {-0.5f, 0.5f, 0.0f};
 
-  glm::vec3 p0 = {-0.5f, -0.5f, 0.0f};
-  glm::vec3 p1 = {0.5f, -0.5f, 0.0f};
-  glm::vec3 p2 = {0.5f, 0.5f, 0.0f};
-  glm::vec3 p3 = {-0.5f, 0.5f, 0.0f};
-
-  VulkanHelper::calculateTriangleFaceDirection(p0, p1, p2); 
-  VulkanHelper::calculateTriangleFaceDirection(p1, p2, p3); 
+  // VulkanHelper::calculateTriangleFaceDirection(p0, p1, p3); 
+  // VulkanHelper::calculateTriangleFaceDirection(p1, p2, p3); 
 
   createIndexBuffer(mIndices);
 
@@ -540,12 +541,13 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
 
   // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP is usefull for drawing quads, e.g.
-  // mIndices = {1, 2, 0, 3};
+  // mIndices = {0, 1, 3, 2};
   // the second and third vertex of every triangle are used as first two vertices of the next triangle
-  // will draw the same as 
+  // the order is set as pi = {vi, vi+(1+i%2), vi+(2-i%2)}
+  // will draw similar as 
   // mIndices = {0, 1, 2, 2, 3, 0}; in VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST mode
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = 
-    VulkanInit::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
+    VulkanInit::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
   PIPElineInfo.pInputAssemblyState = &inputAssemblyState;
 
@@ -581,17 +583,10 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pMultisampleState
   //================================================================================================
-  VkPipelineMultisampleStateCreateInfo multisampling{};
-  multisampling.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-  multisampling.sampleShadingEnable = VK_FALSE;
-  multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-  multisampling.minSampleShading = 1.0f;          // Optional
-  multisampling.pSampleMask = nullptr;            // Optional
-  multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-  multisampling.alphaToOneEnable = VK_FALSE;      // Optional
+  VkPipelineMultisampleStateCreateInfo multisampleState = 
+    VulkanInit::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-  PIPElineInfo.pMultisampleState = &multisampling;
+  PIPElineInfo.pMultisampleState = &multisampleState;
   //================================================================================================
   // pDepthStencilState
   //================================================================================================
@@ -1023,7 +1018,7 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 
   //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
   //first rect
-  vkCmdDrawIndexed(commandBuffer, 4, 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
   // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
   //                         mPipelineLayout, 0, 1,
