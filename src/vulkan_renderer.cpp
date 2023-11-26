@@ -256,7 +256,12 @@ void VulkanRenderer::createLogicalDevice() {
 
   if (mEnableValidationLayers) {
     enabledLayerCount = mValidationLayers.size();
+
+    mValidationLayers.push_back("VK_LAYER_KHRONOS_validation");
     enabledLayerNames = mValidationLayers.data();
+  }
+  else {
+      enabledLayerNames = mValidationLayers.data();
   }
 
   VkDeviceCreateInfo createInfo = VulkanInit::device_create_info(

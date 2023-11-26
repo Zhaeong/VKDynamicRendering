@@ -27,6 +27,8 @@ if(WIN32)
     message("CMAKE_PREFIX_PATH:${CMAKE_PREFIX_PATH}")
 ENDIF(WIN32)
 
+include_directories(${Vulkan_INCLUDE_DIR})
+
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 

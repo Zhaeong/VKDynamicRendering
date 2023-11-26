@@ -9,6 +9,7 @@
 #include <text_overlay.hpp>
 
 #include <filesystem>
+#include <string>
 
 #define GLM_FORCE_RADIANS
 // #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -23,7 +24,7 @@ public:
   SDL_Window *mWindow;
 
   // Device Specific===================================
-  std::vector<const char *> mValidationLayers = {"VK_LAYER_KHRONOS_validation"};
+  std::vector<const char *> mValidationLayers = {};
 
   VkInstance mInstance;
 
