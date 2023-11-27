@@ -1024,9 +1024,9 @@ inline void convertPixelToNormalizedDeviceCoord(VkExtent2D swapChainExtent, int 
 
   //First get the min and max coord X and Y of Pixel vs Device
   float xPixelMin = 0;
-  float xPixelMax = swapChainExtent.width;
+  float xPixelMax = static_cast<float>(swapChainExtent.width);
   float yPixelMin = 0;
-  float yPixelMax = swapChainExtent.height;
+  float yPixelMax = static_cast<float>(swapChainExtent.height);
 
   float xDeviceMin = -1;
   float xDeviceMax = 1;
@@ -1084,7 +1084,7 @@ inline float calculateTriangleFaceDirection(glm::vec3 p0, glm::vec3 p1, glm::vec
   float sum3 = (p2.x * p0.y) - (p0.x * p2.y);
   
   std::cout << "sum1:" << sum1 << " sum2:" << sum2 << " sum3:" << sum3 << "\n";
-  float resval = (-0.5) * (sum1 + sum2 + sum3);
+  float resval = (-0.5f) * (sum1 + sum2 + sum3);
   std::cout << "TriVal: " << resval << "\n";
 
   // VK_FRONT_FACE_COUNTER_CLOCKWISE specifies that a triangle with positive area is considered front-facing.

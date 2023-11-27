@@ -25,8 +25,6 @@ Game::~Game() {
 
 void Game::run() {
 
-  SDL_Event event;
-
   while (isRunning) {
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
@@ -138,7 +136,7 @@ std::string Game::getEvent() {
     case SDL_QUIT:
       eventName = "EXIT";
       isRunning = false;
-
+      break;
     default:
       break;
     }

@@ -20,7 +20,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   mTextOverlay->beginTextUpdate();
   mTextOverlay->addText("aIs it working?", 0.0f, 0.0f, TextOverlay::alignLeft);
-  mTextOverlay->addText("could It BE", mSwapChainExtent.width, 0.0f, TextOverlay::alignRight);
+  mTextOverlay->addText("could It BE", static_cast<float>(mSwapChainExtent.width), 0.0f, TextOverlay::alignRight);
   mTextOverlay->endTextUpdate();
 
   createCommandPool();
@@ -166,14 +166,14 @@ void VulkanRenderer::createInstance() {
   const char *const *enabledLayerNames;
 
   if (mEnableValidationLayers) {
-    enabledLayerCount = mValidationLayers.size();
+    enabledLayerCount = static_cast<uint32_t>(mValidationLayers.size());
     enabledLayerNames = mValidationLayers.data();
   }
 
   VkInstanceCreateInfo instance_create_info{};
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_create_info.pApplicationInfo = &appInfo;
-  instance_create_info.enabledExtensionCount = requiredVkExtenstionsForSDL.size();
+  instance_create_info.enabledExtensionCount = static_cast<uint32_t>(requiredVkExtenstionsForSDL.size());
   if (requiredVkExtenstionsForSDL.size() > 0) {
     instance_create_info.ppEnabledExtensionNames = requiredVkExtenstionsForSDL.data();
   }
@@ -255,7 +255,7 @@ void VulkanRenderer::createLogicalDevice() {
   const char *const *enabledLayerNames;
 
   if (mEnableValidationLayers) {
-    enabledLayerCount = mValidationLayers.size();
+    enabledLayerCount = static_cast<uint32_t>(mValidationLayers.size());
 
     mValidationLayers.push_back("VK_LAYER_KHRONOS_validation");
     enabledLayerNames = mValidationLayers.data();
@@ -265,8 +265,12 @@ void VulkanRenderer::createLogicalDevice() {
   }
 
   VkDeviceCreateInfo createInfo = VulkanInit::device_create_info(
-      queueCreateInfos.size(), queueCreateInfos.data(), enabledLayerCount,
-      enabledLayerNames, mDeviceExtensions.size(), mDeviceExtensions.data(),
+      static_cast<uint32_t>(queueCreateInfos.size()),
+      queueCreateInfos.data(), 
+      enabledLayerCount,
+      enabledLayerNames, 
+      static_cast<uint32_t>(mDeviceExtensions.size()), 
+      mDeviceExtensions.data(),
       &deviceFeatures);
 
   // Query vk12 features
@@ -440,7 +444,7 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   VkImageFormatListCreateInfo formatList{};
   formatList.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
   std::vector formats = {VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB};
-  formatList.viewFormatCount = formats.size();
+  formatList.viewFormatCount = static_cast<uint32_t>(formats.size());
   formatList.pViewFormats = formats.data();
 
   createInfo.pNext = &formatList;
@@ -853,7 +857,7 @@ void VulkanRenderer::createDescriptorSets()
 	    VulkanInit::descriptor_set_allocate_info(
 	        mDescriptorPool,
 	        layoutsArray.data(),
-	        mTextures.size());
+            static_cast<uint32_t>(mTextures.size()));
 
 	VK_CHECK(vkAllocateDescriptorSets(mLogicalDevice, &alloc_info, mDescriptorSets.data()), "vkAllocateDescriptorSets");
 
@@ -865,7 +869,7 @@ void VulkanRenderer::createDescriptorSets()
           VulkanInit::write_descriptor_set_from_image(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor)
       };
 
-    mTextures[i].descriptor_set_index = i;
+    mTextures[i].descriptor_set_index = static_cast<uint32_t>(i);
 
     std::cout << "Texture: " << mTextures[i].texPath << " descriptorsetindex: " << mTextures[i].descriptor_set_index << "\n";
 
