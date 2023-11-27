@@ -35,15 +35,29 @@ include_directories(${SDL2_INCLUDE_DIRS})
 message("Project Build Dir: ${PROJECT_BINARY_DIR}")
 file(COPY "${PROJECT_SOURCE_DIR}/textures" DESTINATION "${PROJECT_BINARY_DIR}")
 file(COPY "${PROJECT_SOURCE_DIR}/shaders" DESTINATION "${PROJECT_BINARY_DIR}")
+file(COPY "${PROJECT_SOURCE_DIR}/fonts" DESTINATION "${PROJECT_BINARY_DIR}")
+if(WIN32)
+    file(COPY "${PROJECT_SOURCE_DIR}/bin/SDL2.dll" DESTINATION "${PROJECT_BINARY_DIR}")
+    set_property(DIRECTORY ${PROJECT_BINARY_DIR} PROPERTY VS_STARTUP_PROJECT VKGame)
+ENDIF(WIN32)
+
 
 include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_SOURCE_DIR}/external")
 
-add_executable (VKGame
-    "src/game.cpp"
-    "src/vulkan_renderer.cpp"
-    "src/text_overlay.cpp"
-    "src/main.cpp")
+if(WIN32)
+    add_executable (VKGame WIN32
+        "src/game.cpp"
+        "src/vulkan_renderer.cpp"
+        "src/text_overlay.cpp"
+        "src/main.cpp")
+ELSEIF(UNIX)
+    add_executable (VKGame
+        "src/game.cpp"
+        "src/vulkan_renderer.cpp"
+        "src/text_overlay.cpp"
+        "src/main.cpp")
+ENDIF(WIN32)
 
 target_link_libraries(VKGame PUBLIC "${SDL2_LIBRARIES}")
 target_link_libraries(VKGame PUBLIC "${Vulkan_LIBRARY}")

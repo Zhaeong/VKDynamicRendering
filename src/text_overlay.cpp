@@ -42,7 +42,9 @@ void TextOverlay::prepareResources(){
 
     // fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
     std::filesystem::path p = std::filesystem::current_path();
-    fread(mTTF_buffer, 1, 1<<20, fopen((p.generic_string() + "/external/Afacad-Regular.ttf").c_str(), "rb"));
+
+    FILE* file = fopen((p.generic_string() + "/fonts/Afacad-Regular.ttf").c_str(), "rb");
+    fread(mTTF_buffer, 1, static_cast<size_t>(1) << 20, file);
 
     // int res = stbtt_BakeFontBitmap(mTTF_buffer, 0, mFontSize, temp_bitmap[0], mBitmapWidth, mBitmapHeight, mFirstChar,mNumChar, mCharData);
     int res = stbtt_PackBegin(&pc, temp_bitmap[0], mBitmapWidth, mBitmapHeight, 0, 1, NULL);
@@ -211,7 +213,6 @@ void TextOverlay::prepareResources(){
     samplerInfo.maxLod = 1.0f;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     VK_CHECK(vkCreateSampler(mLogicalDevice, &samplerInfo, nullptr, &mSampler), "vkCreateSampler");
-
 
     // Descriptor
     // Font uses a separate descriptor pool

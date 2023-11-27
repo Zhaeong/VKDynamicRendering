@@ -47,11 +47,9 @@ class TextOverlay {
         uint32_t mNumLetters;
         float mScale = 1.0f;
 
-        //const int mBitmapHeight = 720;
-        //const int mBitmapWidth = 1280;
+        static const int mBitmapHeight = 720;
+        static const int mBitmapWidth = 1280;
 
-#define mBitmapHeight 720
-#define mBitmapWidth 1280
         const float mFontSize = 64.0f;
         const int mFirstChar = 32;
         const int mNumChar = 96;
