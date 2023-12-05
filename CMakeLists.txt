@@ -20,12 +20,17 @@ project(VKGame VERSION 1.0)
 #              PATHS ${VULKAN_SDK}/lib )
 # message("Vulkan_LIBRARY:${Vulkan_LIBRARY}")
 
-# devenv Path: D:\visualstudio2022\Common7\IDE
+# devenv  Path: D:\visualstudio2022\Common7\IDE
+# MSBuild Path: D:\visualstudio2022\MSBuild\Current\Bin
 # To Build Command line windows
 # devenv VKGame.sln /Rebuild "Release|x64"
+# MSBuild VKGame.vcxproj -t:Rebuild -p:Configuration=Release
 
 # Help
 # devenv /?
+
+# Debug
+# devenv /DebugExe Debug/VKGame.exe
 
 find_package(Vulkan REQUIRED)
 
