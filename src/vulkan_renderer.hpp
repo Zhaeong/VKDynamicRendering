@@ -29,7 +29,7 @@ public:
   VkInstance mInstance;
 
   // This needs to be false else other layers don't work
-  const bool mEnableValidationLayers = false;
+  const bool mEnableValidationLayers = true;
 
   VkSurfaceKHR mSurface;
 
@@ -66,6 +66,11 @@ public:
   VkFormat mSwapChainImageFormat;
   VkExtent2D mSwapChainExtent;
   std::vector<VkImageView> mSwapChainImageViews;
+
+  //Depth image
+  VkImage mDepthImage;
+  VkDeviceMemory mDepthImageMemory;
+  VkImageView mDepthImageView;
 
   //===================================================
   // Pipeline
@@ -127,6 +132,8 @@ public:
   void createSwapChainImageViews();
   void cleanupSwapChain();
   void recreateSwapChain();
+
+  void createDepthImage();
 
   //DescriptorSetLayout, pipelineLayout
   void setupDescriptorSetLayout();

@@ -1,3 +1,5 @@
+#include "vulkan/vulkan_core.h"
+#include "vulkan_helper.hpp"
 #include <vulkan_renderer.hpp>
 
 namespace VulkanEngine {
@@ -15,6 +17,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   createSwapChain(mSurface);
   createSwapChainImageViews();
+  
 
   mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImageViews, mSwapChainImageFormat, mSwapChainExtent, mGraphicsQueue);
 
@@ -27,6 +30,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createCommandBuffers(mSwapChainImageCount);
   createSyncObjects(mSwapChainImageCount);
 
+  createDepthImage();
   //loaded before creating the descriptor set bindings
   loadTextures();
 
@@ -382,6 +386,20 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     renderingInfo.colorAttachmentCount = 1;
     renderingInfo.pColorAttachments = &renderingColorAttachmentInfo;
     //Can add depth attachment here for depth buffering
+    
+    VkRenderingAttachmentInfoKHR renderingDepthAttachmentInfo{};
+    renderingDepthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    renderingDepthAttachmentInfo.imageView = mDepthImageView;
+    renderingDepthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+    renderingDepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    renderingDepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+    VkClearValue clearColorDepth = {{{0.2f, 0.2f, 0.2f, 1.0f}}};
+    clearColorDepth.depthStencil = {1.0f, 0};
+    renderingDepthAttachmentInfo.clearValue = clearColorDepth;
+    renderingInfo.pDepthAttachment = &renderingDepthAttachmentInfo;
+
+
 
   
     // dynamic rendering end
@@ -502,6 +520,51 @@ void VulkanRenderer::createSwapChainImageViews() {
         VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
+void VulkanRenderer::createDepthImage() {
+  VkFormat format = VulkanHelper::findSupportedFormat(
+      mPhysicalDevice,
+      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+       VK_FORMAT_D24_UNORM_S8_UINT},
+      VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+	VkImageCreateInfo image_create_info = VulkanInit::image_create_info();
+	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
+	image_create_info.format            = format;
+	image_create_info.mipLevels         = 1;
+	image_create_info.arrayLayers       = 1;
+	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.extent.width  = mSwapChainExtent.width;
+	image_create_info.extent.height = mSwapChainExtent.height;
+	image_create_info.extent.depth  = 1;
+	image_create_info.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	VK_CHECK(vkCreateImage(mLogicalDevice, &image_create_info, nullptr, &mDepthImage), "vkCreateImage");
+  VkMemoryRequirements memRequirements;
+  vkGetImageMemoryRequirements(mLogicalDevice, mDepthImage, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = VulkanHelper::findMemoryType(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  VK_CHECK(vkAllocateMemory(mLogicalDevice, &allocInfo, nullptr, &mDepthImageMemory), "vkAllocateMemory"); 
+
+  vkBindImageMemory(mLogicalDevice, mDepthImage, mDepthImageMemory, 0);
+
+  mDepthImageView = VulkanHelper::createImageView(mLogicalDevice, mDepthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+  VulkanHelper::transitionImageLayout(mLogicalDevice, 
+      mCommandPool, 
+      mGraphicsQueue, 
+      mDepthImage, 
+      format, 
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+
+}
+
 
 void VulkanRenderer::createGraphicsPipeline() {
 
@@ -968,6 +1031,7 @@ void VulkanRenderer::recreateSwapChain() {
 
   createSwapChain(mSurface);
   createSwapChainImageViews();
+  createDepthImage();
 
   delete mTextOverlay;
   mTextOverlay = new TextOverlay(mPhysicalDevice, mLogicalDevice, mQueueFamilyIndices.graphicsFamily, mSwapChainImageViews, mSwapChainImageFormat, mSwapChainExtent, mGraphicsQueue);
