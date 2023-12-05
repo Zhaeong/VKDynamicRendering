@@ -1,3 +1,4 @@
+#include "utils.hpp"
 #include "vulkan/vulkan_core.h"
 #include "vulkan_helper.hpp"
 #include <vulkan_renderer.hpp>
@@ -288,10 +289,7 @@ void VulkanRenderer::createLogicalDevice() {
 
   createInfo.pNext = &dynamic_rendering_feature;
 
-  if (vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mLogicalDevice) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to create logical device!");
-  }
+  VK_CHECK(vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mLogicalDevice), "vkCreateDevice");
 
   vkGetDeviceQueue(mLogicalDevice, mQueueFamilyIndices.graphicsFamily, 0, &mGraphicsQueue);
 
@@ -949,12 +947,12 @@ void VulkanRenderer::createDescriptorSets()
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
-  static auto startTime = std::chrono::high_resolution_clock::now();
+  // static auto startTime = std::chrono::high_resolution_clock::now();
 
-  auto currentTime = std::chrono::high_resolution_clock::now();
-  float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                   currentTime - startTime)
-                   .count();
+  // auto currentTime = std::chrono::high_resolution_clock::now();
+  // float time = std::chrono::duration<float, std::chrono::seconds::period>(
+  //                 currentTime - startTime)
+  //                 .count();
 
 
   Utils::UniformBufferObject ubo{};
