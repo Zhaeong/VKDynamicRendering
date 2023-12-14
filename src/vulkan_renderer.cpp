@@ -1,6 +1,3 @@
-#include "utils.hpp"
-#include "vulkan/vulkan_core.h"
-#include "vulkan_helper.hpp"
 #include <vulkan_renderer.hpp>
 
 namespace VulkanEngine {

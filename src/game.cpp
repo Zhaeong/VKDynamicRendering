@@ -127,6 +127,9 @@ std::string Game::getEvent() {
       SDL_GetMouseState(&posX, &posY);
       std::cout << "MouseX: " << posX << " MouseY:" << posY << "\n";
       VulkanHelper::convertPixelToNormalizedDeviceCoord(vulkanRenderer->mSwapChainExtent, posX, posY);
+      if(event.button.button == SDL_BUTTON_LEFT) {
+        std::cout << "Left mouse pressed\n";
+      }
       break;
 
     case SDL_MOUSEBUTTONUP:
