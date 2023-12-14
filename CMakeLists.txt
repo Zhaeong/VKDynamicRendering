@@ -58,7 +58,11 @@ include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_SOURCE_DIR}/external")
 
 if(WIN32)
-    add_executable (VKGame WIN32
+    #This sets Project Properties->Linker->System->Subsystem to Windows
+    #see https://cmake.org/cmake/help/v3.0/prop_tgt/WIN32_EXECUTABLE.html#prop_tgt:WIN32_EXECUTABLE
+    #add_executable (VKGame WIN32
+    #else it will create as default console app
+    add_executable (VKGame
         "src/game.cpp"
         "src/vulkan_renderer.cpp"
         "src/text_overlay.cpp"
