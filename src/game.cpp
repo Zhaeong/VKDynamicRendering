@@ -154,7 +154,7 @@ std::string Game::getEvent() {
       std::cout << "moving da mouse\n";
       std::cout << "MouseX: " << event.motion.x << " MouseY:" << event.motion.y << "\n";
       if(isCameraMoving) {
-        vulkanRenderer->mCameraLookX += (mouseXStart - event.motion.x) * 0.00001f;
+        vulkanRenderer->mCameraLookX -= (mouseXStart - event.motion.x) * 0.00001f;
         vulkanRenderer->mCameraLookY -= (mouseYStart - event.motion.y) * 0.00001f;
       }
       break;
