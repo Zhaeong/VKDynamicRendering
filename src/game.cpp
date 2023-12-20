@@ -54,37 +54,43 @@ std::string Game::getEvent() {
         break;
       case SDLK_LEFT:
         eventName = "MOVE_LEFT";
+        vulkanRenderer->mCameraLookX += 0.1f;
         break;
       case SDLK_RIGHT:
         eventName = "MOVE_RIGHT";
+        vulkanRenderer->mCameraLookX -= 0.1f;
         break;
       case SDLK_UP:
         eventName = "MOVE_UP";
+        vulkanRenderer->mCameraLookY += 0.1f;
         break;
       case SDLK_DOWN:
         eventName = "MOVE_DOWN";
+        vulkanRenderer->mCameraLookY -= 0.1f;
         break;
       case SDLK_e: {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraLookZ += 0.1f;
         break;
       }
       case SDLK_q: {
         eventName = "KEY_Q";
         std::cout << "Event: " << eventName << "\n";
+        vulkanRenderer->mCameraLookZ -= 0.1f;
         break;
       }
 
       case SDLK_w: {
         eventName = "KEY_W";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosY += 0.1f;
+        vulkanRenderer->mCameraPosZ += 0.1f;
         break;
       }
       case SDLK_s: {
         eventName = "KEY_S";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosY -= 0.1f;
+        vulkanRenderer->mCameraPosZ -= 0.1f;
         break;
       }
       case SDLK_a: {
@@ -102,13 +108,13 @@ std::string Game::getEvent() {
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosZ -= 0.1f;
+        vulkanRenderer->mCameraPosY -= 0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosZ += 0.1f;
+        vulkanRenderer->mCameraPosY += 0.1f;
         break;
       }
       default:
@@ -126,14 +132,31 @@ std::string Game::getEvent() {
       int posX, posY;
       SDL_GetMouseState(&posX, &posY);
       std::cout << "MouseX: " << posX << " MouseY:" << posY << "\n";
+      std::cout << "MouseLookX: " << vulkanRenderer->mCameraLookX << " MouseY:" << vulkanRenderer->mCameraLookY<< "\n";
       VulkanHelper::convertPixelToNormalizedDeviceCoord(vulkanRenderer->mSwapChainExtent, posX, posY);
       if(event.button.button == SDL_BUTTON_LEFT) {
         std::cout << "Left mouse pressed\n";
+        isCameraMoving = true;
+        mouseXStart = posX; 
+        mouseYStart = posY; 
       }
       break;
 
     case SDL_MOUSEBUTTONUP:
       eventName = "MOUSE_UP";
+      if(event.button.button == SDL_BUTTON_LEFT) {
+        std::cout << "Left mouse pressed\n";
+        isCameraMoving = false;
+      }
+      break;
+
+    case SDL_MOUSEMOTION:
+      std::cout << "moving da mouse\n";
+      std::cout << "MouseX: " << event.motion.x << " MouseY:" << event.motion.y << "\n";
+      if(isCameraMoving) {
+        vulkanRenderer->mCameraLookX += (mouseXStart - event.motion.x) * 0.00001f;
+        vulkanRenderer->mCameraLookY -= (mouseYStart - event.motion.y) * 0.00001f;
+      }
       break;
 
     case SDL_QUIT:

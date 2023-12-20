@@ -19,6 +19,10 @@ public:
   SDL_Window *window;
   VulkanEngine::VulkanRenderer *vulkanRenderer;
 
+  bool isCameraMoving = false;
+  int32_t mouseXStart;
+  int32_t mouseYStart;
+
   Game();
   ~Game();
 
