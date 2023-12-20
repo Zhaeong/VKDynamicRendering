@@ -963,8 +963,9 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
 
   glm::vec3 cameraPos = glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ);
-  // glm::vec3 cameraFront = glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ);
-  glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+
+  // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+  glm::vec3 cameraFront = glm::vec3(mCameraLookX, mCameraLookY, -1.0f);
   glm::vec3 cameraLook = cameraPos + cameraFront; 
   glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -984,9 +985,9 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   mTextOverlay->addText("Camera Pos- X:" + std::to_string(mCameraPosX) + 
                         " Y:"  + std::to_string(mCameraPosY) + 
                         " Z:"  + std::to_string(mCameraPosZ), 0.0f, 0.0f, TextOverlay::alignLeft);
-  mTextOverlay->addText("Camera Look- X:" + std::to_string(mCameraLookX) + 
-                        " Y:"  + std::to_string(mCameraLookY) + 
-                        " Z:"  + std::to_string(mCameraLookZ), 0.0f, 50.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("Camera Look- X:" + std::to_string(cameraLook.x) + 
+                        " Y:"  + std::to_string(cameraLook.y) + 
+                        " Z:"  + std::to_string(cameraLook.z), 0.0f, 50.0f, TextOverlay::alignLeft);
 
 
   mTextOverlay->endTextUpdate();
