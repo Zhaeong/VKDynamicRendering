@@ -7,32 +7,42 @@ Game::Game() {
                  SDL_GetError());
   }
 
-  window = SDL_CreateWindow("SDL Vulkan Sample", SDL_WINDOWPOS_CENTERED,
+  mWindow = SDL_CreateWindow("SDL Vulkan Sample", SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, GameEngine::WIDTH,
                             GameEngine::HEIGHT,
                             SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
-  vulkanRenderer = new VulkanEngine::VulkanRenderer(window);
+  mVulkanRenderer = new VulkanEngine::VulkanRenderer(mWindow);
 
-  vulkanRenderer->mCameraPos = glm::vec3(0, 0, 02);
+  mVulkanRenderer->mCameraPos = glm::vec3(0, 0, 02);
 
   isRunning = true;
+  mLastTimestamp = std::chrono::high_resolution_clock::now();
 }
 
 Game::~Game() {
   // delete vulkanRenderer;
-  SDL_DestroyWindow(window);
+  SDL_DestroyWindow(mWindow);
   SDL_Quit();
 }
 
 void Game::run() {
 
   while (isRunning) {
+
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
-    vulkanRenderer->drawFrame();
+    mVulkanRenderer->drawFrame();
 
-    // SDL_Delay(1000);
+    std::chrono::time_point<std::chrono::high_resolution_clock> currentTime = std::chrono::high_resolution_clock::now();
+    mDeltaTime = (float)std::chrono::duration<double, std::milli>(currentTime - mLastTimestamp).count();
+    //std::cout << "timer: " << mDeltaTime << "\n";
+    mLastTimestamp = std::chrono::high_resolution_clock::now();
+    //float fps = 1000.0f/mDeltaTime;
+    //std::cout << "fps: " << fps << "\n";
+
+    //SDL_Delay(10);
+    //_sleep(100);
     //   isRunning = false;
   }
 }
@@ -56,37 +66,40 @@ std::string Game::getEvent() {
         break;
       case SDLK_LEFT:
         eventName = "MOVE_LEFT";
-        vulkanRenderer->mCameraLookX += 0.1f;
+        mVulkanRenderer->mCameraLookX += 0.1f;
         break;
       case SDLK_RIGHT:
         eventName = "MOVE_RIGHT";
-        vulkanRenderer->mCameraLookX -= 0.1f;
+        mVulkanRenderer->mCameraLookX -= 0.1f;
         break;
       case SDLK_UP:
         eventName = "MOVE_UP";
-        vulkanRenderer->mCameraLookY += 0.1f;
+        mVulkanRenderer->mCameraLookY += 0.1f;
         break;
       case SDLK_DOWN:
         eventName = "MOVE_DOWN";
-        vulkanRenderer->mCameraLookY -= 0.1f;
+        mVulkanRenderer->mCameraLookY -= 0.1f;
         break;
       case SDLK_e: {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraLookZ += 0.1f;
+        mVulkanRenderer->mCameraLookZ += 0.1f;
         break;
       }
       case SDLK_q: {
         eventName = "KEY_Q";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraLookZ -= 0.1f;
+        mVulkanRenderer->mCameraLookZ -= 0.1f;
         break;
       }
 
       case SDLK_w: {
         eventName = "KEY_W";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPos += vulkanRenderer->mCameraFront;
+        float moveSpeed = mDeltaTime * mMoveSpeed;
+        std::cout << "deltaTime: " << mDeltaTime << "\n";
+        std::cout << "MoveSpeed: " << moveSpeed << "\n";
+        mVulkanRenderer->mCameraPos += (mVulkanRenderer->mCameraFront * mDeltaTime * mMoveSpeed);
         //vulkanRenderer->mCameraPosZ += 0.1f;
 
         break;
@@ -95,31 +108,31 @@ std::string Game::getEvent() {
         eventName = "KEY_S";
         std::cout << "Event: " << eventName << "\n";
         //vulkanRenderer->mCameraPosZ -= 0.1f;
-        vulkanRenderer->mCameraPos -= vulkanRenderer->mCameraFront;
+        mVulkanRenderer->mCameraPos -= mVulkanRenderer->mCameraFront * mDeltaTime * mMoveSpeed;
         break;
       }
       case SDLK_a: {
         eventName = "KEY_A";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosX -= 0.1f;
+        mVulkanRenderer->mCameraPosX -= 0.1f;
         break;
       }
       case SDLK_d: {
         eventName = "KEY_D";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosX += 0.1f;
+        mVulkanRenderer->mCameraPosX += 0.1f;
         break;
       }
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosY -= 0.1f;
+        mVulkanRenderer->mCameraPosY -= 0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosY += 0.1f;
+        mVulkanRenderer->mCameraPosY += 0.1f;
         break;
       }
       default:
@@ -137,13 +150,13 @@ std::string Game::getEvent() {
       int posX, posY;
       SDL_GetMouseState(&posX, &posY);
       std::cout << "MouseX: " << posX << " MouseY:" << posY << "\n";
-      std::cout << "MouseLookX: " << vulkanRenderer->mCameraLookX << " MouseY:" << vulkanRenderer->mCameraLookY<< "\n";
-      VulkanHelper::convertPixelToNormalizedDeviceCoord(vulkanRenderer->mSwapChainExtent, posX, posY);
+      std::cout << "MouseLookX: " << mVulkanRenderer->mCameraLookX << " MouseY:" << mVulkanRenderer->mCameraLookY<< "\n";
+      VulkanHelper::convertPixelToNormalizedDeviceCoord(mVulkanRenderer->mSwapChainExtent, posX, posY);
       if(event.button.button == SDL_BUTTON_LEFT) {
         std::cout << "Left mouse pressed\n";
-        isCameraMoving = true;
-        mouseXStart = posX; 
-        mouseYStart = posY; 
+        mIsCameraMoving = true;
+        mMouseXStart = posX; 
+        mMouseYStart = posY; 
       }
       break;
 
@@ -151,16 +164,16 @@ std::string Game::getEvent() {
       eventName = "MOUSE_UP";
       if(event.button.button == SDL_BUTTON_LEFT) {
         std::cout << "Left mouse pressed\n";
-        isCameraMoving = false;
+        mIsCameraMoving = false;
       }
       break;
 
     case SDL_MOUSEMOTION:
       // std::cout << "moving da mouse\n";
       // std::cout << "MouseX: " << event.motion.x << " MouseY:" << event.motion.y << "\n";
-      if(isCameraMoving) {
-        vulkanRenderer->mCameraLookX -= (mouseXStart - event.motion.x) * 0.00001f;
-        vulkanRenderer->mCameraLookY -= (mouseYStart - event.motion.y) * 0.00001f;
+      if(mIsCameraMoving) {
+        mVulkanRenderer->mCameraLookX -= (mMouseXStart - event.motion.x) * 0.00001f;
+        mVulkanRenderer->mCameraLookY -= (mMouseYStart - event.motion.y) * 0.00001f;
       }
       break;
 

@@ -16,13 +16,15 @@ class Game {
 public:
   bool isRunning;
 
-  SDL_Window *window;
-  VulkanEngine::VulkanRenderer *vulkanRenderer;
+  std::chrono::time_point<std::chrono::high_resolution_clock> mLastTimestamp;
+  float mDeltaTime;
+  float mMoveSpeed = 0.1f;
+  SDL_Window *mWindow;
+  VulkanEngine::VulkanRenderer *mVulkanRenderer;
 
-  bool isCameraMoving = false;
-  int32_t mouseXStart;
-  int32_t mouseYStart;
-
+  bool mIsCameraMoving = false;
+  int32_t mMouseXStart;
+  int32_t mMouseYStart;
   Game();
   ~Game();
 
