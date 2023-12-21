@@ -114,6 +114,9 @@ public:
   float mCameraLookZ = -1.0f;
 
 
+  glm::vec3 mCameraPos;
+  glm::vec3 mCameraFront;
+
   //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);

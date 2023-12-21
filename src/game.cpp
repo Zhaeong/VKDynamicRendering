@@ -14,6 +14,8 @@ Game::Game() {
 
   vulkanRenderer = new VulkanEngine::VulkanRenderer(window);
 
+  vulkanRenderer->mCameraPos = glm::vec3(0, 0, 02);
+
   isRunning = true;
 }
 
@@ -84,13 +86,16 @@ std::string Game::getEvent() {
       case SDLK_w: {
         eventName = "KEY_W";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosZ += 0.1f;
+        vulkanRenderer->mCameraPos += vulkanRenderer->mCameraFront;
+        //vulkanRenderer->mCameraPosZ += 0.1f;
+
         break;
       }
       case SDLK_s: {
         eventName = "KEY_S";
         std::cout << "Event: " << eventName << "\n";
-        vulkanRenderer->mCameraPosZ -= 0.1f;
+        //vulkanRenderer->mCameraPosZ -= 0.1f;
+        vulkanRenderer->mCameraPos -= vulkanRenderer->mCameraFront;
         break;
       }
       case SDLK_a: {

@@ -961,17 +961,15 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // ubo.model = glm::scale(myIdentityMatrix, glm::vec3(20.0f, 20.0f ,20.0f)); //The position of the model in world space
   ubo.model = myIdentityMatrix;
 
-
-  glm::vec3 cameraPos = glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ);
-
   // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-  glm::vec3 cameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
-  glm::vec3 cameraLook = cameraPos + cameraFront; 
+  mCameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
+  mCameraFront = glm::normalize(mCameraFront);
+  glm::vec3 cameraLook = mCameraPos + mCameraFront; 
   glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
   ubo.view = glm::lookAt(
-    cameraPos,  // The position of the camera in world space
+    mCameraPos,  // The position of the camera in world space
     // glm::vec3(0.0f, 0.0f, 0.0f),  // The location you want to look at
     cameraLook,
     cameraUp); // The up vector, how camera is orientated
@@ -982,12 +980,16 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // that means it's basically what it looks like without and MVP transformations, useful for a 1-1 mapping of model to camera space
 
   mTextOverlay->beginTextUpdate();
-  mTextOverlay->addText("Camera Pos- X:" + std::to_string(mCameraPosX) + 
-                        " Y:"  + std::to_string(mCameraPosY) + 
-                        " Z:"  + std::to_string(mCameraPosZ), 0.0f, 0.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("Camera Pos- X:" + std::to_string(mCameraPos.x) + 
+                        " Y:"  + std::to_string(mCameraPos.y) + 
+                        " Z:"  + std::to_string(mCameraPos.z), 0.0f, 0.0f, TextOverlay::alignLeft);
   mTextOverlay->addText("Camera Look- X:" + std::to_string(cameraLook.x) + 
                         " Y:"  + std::to_string(cameraLook.y) + 
-                        " Z:"  + std::to_string(cameraLook.z), 0.0f, 50.0f, TextOverlay::alignLeft);
+                        " Z:"  + std::to_string(cameraLook.z), 0.0f, 30.0f, TextOverlay::alignLeft);
+  mTextOverlay->addText("Camera Front - X:" + std::to_string(mCameraFront.x) + 
+                        " Y:"  + std::to_string(mCameraFront.y) + 
+                        " Z:"  + std::to_string(mCameraFront.z), 0.0f, 60.0f, TextOverlay::alignLeft);
+
 
 
   mTextOverlay->endTextUpdate();
