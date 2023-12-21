@@ -965,7 +965,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   glm::vec3 cameraPos = glm::vec3(mCameraPosX, mCameraPosY, mCameraPosZ);
 
   // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-  glm::vec3 cameraFront = glm::vec3(mCameraLookX, mCameraLookY, -1.0f);
+  glm::vec3 cameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
   glm::vec3 cameraLook = cameraPos + cameraFront; 
   glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -1000,12 +1000,14 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     10.0f); // Far clipping plane. Keep as little as possible.
 
   // Or, for an ortho camera :
-  // ubo.proj = glm::ortho(-2.0f, // left
-  //                       2.0f,  // right
-  //                       -2.0f,  // bottom
-  //                       2.0f, // up
-  //                       -5.0f, // near
-  //                       5.0f); // far
+  /*
+  ubo.proj = glm::ortho(-2.0f, // left
+                         2.0f,  // right
+                         -2.0f,  // bottom
+                         2.0f, // up
+                         -5.0f, // near
+                         5.0f); // far
+  */
 
   void *data;
   vkMapMemory(mLogicalDevice,

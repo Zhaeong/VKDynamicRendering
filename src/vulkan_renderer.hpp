@@ -111,7 +111,7 @@ public:
 
   float mCameraLookX = 0.0f;
   float mCameraLookY = 0.0f;
-  float mCameraLookZ = 0.0f;
+  float mCameraLookZ = -1.0f;
 
 
   //===================================================
