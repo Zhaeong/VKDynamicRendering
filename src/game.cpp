@@ -14,7 +14,9 @@ Game::Game() {
 
   mVulkanRenderer = new VulkanEngine::VulkanRenderer(mWindow);
 
-  mVulkanRenderer->mCameraPos = glm::vec3(0, 0, 02);
+  mVulkanRenderer->mCameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
+  
+  mVulkanRenderer->mCameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
   isRunning = true;
   mLastTimestamp = std::chrono::high_resolution_clock::now();
@@ -32,7 +34,6 @@ void Game::run() {
 
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
-    mVulkanRenderer->drawFrame();
 
     std::chrono::time_point<std::chrono::high_resolution_clock> currentTime = std::chrono::high_resolution_clock::now();
     mDeltaTime = (float)std::chrono::duration<double, std::milli>(currentTime - mLastTimestamp).count();
@@ -41,8 +42,8 @@ void Game::run() {
     //float fps = 1000.0f/mDeltaTime;
     //std::cout << "fps: " << fps << "\n";
 
+    mVulkanRenderer->drawFrame();
     //SDL_Delay(10);
-    //_sleep(100);
     //   isRunning = false;
   }
 }
@@ -114,13 +115,14 @@ std::string Game::getEvent() {
       case SDLK_a: {
         eventName = "KEY_A";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mCameraPosX -= 0.1f;
+        // Get cross product of the front x up to get the perpendicular direction
+        mVulkanRenderer->mCameraPos -= glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
         break;
       }
       case SDLK_d: {
         eventName = "KEY_D";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mCameraPosX += 0.1f;
+        mVulkanRenderer->mCameraPos += glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
         break;
       }
       case SDLK_z: {

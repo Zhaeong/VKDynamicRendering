@@ -116,6 +116,7 @@ public:
 
   glm::vec3 mCameraPos;
   glm::vec3 mCameraFront;
+  glm::vec3 mCameraUp;
 
   //===================================================
   // Functions
