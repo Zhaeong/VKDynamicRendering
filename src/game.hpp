@@ -20,6 +20,8 @@ public:
   float mDeltaTime;
   float mMoveSpeed = 0.1f;
   float mLookSpeed = 5.0f;
+  float mYaw = -90.0;
+  float mPitch = 0;
   SDL_Window *mWindow;
   VulkanEngine::VulkanRenderer *mVulkanRenderer;
 

@@ -34,6 +34,20 @@ void Game::run() {
 
     std::string event = getEvent();
     // std::cout << "Eventer: " << event << "\n";
+    float cosYaw = cos(glm::radians(mYaw));
+    float sinYaw = sin(glm::radians(mYaw));
+
+    float cosPitch = cos(glm::radians(mPitch));
+    float sinPitch = sin(glm::radians(mPitch));
+
+    glm::vec3 rotation = glm::vec3(0.0f);
+
+    rotation.x = cosYaw * cosPitch;
+    rotation.y = sinPitch;
+    rotation.z = sinYaw * cosPitch;
+
+    rotation = glm::normalize(rotation);
+    mVulkanRenderer->mCameraFront = rotation;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> currentTime = std::chrono::high_resolution_clock::now();
     mDeltaTime = (float)std::chrono::duration<double, std::milli>(currentTime - mLastTimestamp).count();
@@ -67,65 +81,22 @@ std::string Game::getEvent() {
         break;
       case SDLK_LEFT: {
         eventName = "MOVE_LEFT";
-        float rotationSpeed = -mLookSpeed * mDeltaTime;
-        float cosTheta = cos(glm::radians(rotationSpeed));
-        float sinTheta = sin(glm::radians(rotationSpeed));
-
-        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
-
-        // Using the standard 2D rotation matrix
-        rotation.x = (rotation.x * cosTheta) - (rotation.z * sinTheta);
-        rotation.z = (rotation.x * sinTheta) + (rotation.z * cosTheta);
-        rotation = glm::normalize(rotation);
-        mVulkanRenderer->mCameraFront =  rotation;
- 
+        mYaw -= mLookSpeed * mDeltaTime;
         break;
       }
       case SDLK_RIGHT: {
         eventName = "MOVE_RIGHT";
-
-        float rotationSpeed = mLookSpeed * mDeltaTime;
-        float cosTheta = cos(glm::radians(rotationSpeed));
-        float sinTheta = sin(glm::radians(rotationSpeed));
-
-        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
-
-        // Using the standard 2D rotation matrix
-        rotation.x = (rotation.x * cosTheta) - (rotation.z * sinTheta);
-        rotation.z = (rotation.x * sinTheta) + (rotation.z * cosTheta);
-        rotation = glm::normalize(rotation);
-        mVulkanRenderer->mCameraFront =  rotation;
+        mYaw += mLookSpeed * mDeltaTime;
         break;
       }
       case SDLK_UP: {
         eventName = "MOVE_UP";
-        float rotationSpeed = -mLookSpeed * mDeltaTime;
-        float cosTheta = cos(glm::radians(rotationSpeed));
-        float sinTheta = sin(glm::radians(rotationSpeed));
-
-        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
-
-        // Using the standard 2D rotation matrix
-        rotation.y = (rotation.y * cosTheta) - (rotation.z * sinTheta);
-        rotation.z = (rotation.y * sinTheta) + (rotation.z * cosTheta);
-        rotation = glm::normalize(rotation);
-        mVulkanRenderer->mCameraFront =  rotation;
- 
+        mPitch -= mLookSpeed * mDeltaTime;
         break;
       }
       case SDLK_DOWN: {
         eventName = "MOVE_DOWN";
-        float rotationSpeed = mLookSpeed * mDeltaTime;
-        float cosTheta = cos(glm::radians(rotationSpeed));
-        float sinTheta = sin(glm::radians(rotationSpeed));
-
-        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
-
-        // Using the standard 2D rotation matrix
-        rotation.y = (rotation.y * cosTheta) - (rotation.z * sinTheta);
-        rotation.z = (rotation.y * sinTheta) + (rotation.z * cosTheta);
-        rotation = glm::normalize(rotation);
-        mVulkanRenderer->mCameraFront =  rotation;
+        mPitch += mLookSpeed * mDeltaTime;
  
         break;
       }
@@ -222,8 +193,10 @@ std::string Game::getEvent() {
       // std::cout << "moving da mouse\n";
       // std::cout << "MouseX: " << event.motion.x << " MouseY:" << event.motion.y << "\n";
       if(mIsCameraMoving) {
-        mVulkanRenderer->mCameraLookX -= (mMouseXStart - event.motion.x) * 0.00001f;
-        mVulkanRenderer->mCameraLookY -= (mMouseYStart - event.motion.y) * 0.00001f;
+        float yawDiff = (mMouseXStart - event.motion.x) * 0.01f; 
+        float pitchDiff = (mMouseYStart - event.motion.y) * 0.01f; 
+        mYaw -= yawDiff;
+        mPitch -= pitchDiff;
       }
       break;
 
