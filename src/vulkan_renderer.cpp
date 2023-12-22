@@ -962,17 +962,15 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   ubo.model = myIdentityMatrix;
 
   // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-  mCameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
-  mCameraFront = glm::normalize(mCameraFront);
+  //mCameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
+  //mCameraFront = glm::normalize(mCameraFront);
   glm::vec3 cameraLook = mCameraPos + mCameraFront; 
-  glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
 
   ubo.view = glm::lookAt(
     mCameraPos,  // The position of the camera in world space
     // glm::vec3(0.0f, 0.0f, 0.0f),  // The location you want to look at
     cameraLook,
-    cameraUp); // The up vector, how camera is orientated
+    mCameraUp); // The up vector, how camera is orientated
     // glm::vec3(0.0f, 0.0f, 1.0f)); // The up vector, how camera is orientated
 
   // setting camera pos to (0, 0, 2) and looking at (0, 0, 0) means it's directly over the model

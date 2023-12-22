@@ -105,10 +105,6 @@ public:
 
 
   //===================================================
-  float mCameraPosX = 0.0f;
-  float mCameraPosY = 0.0f;
-  float mCameraPosZ = 2.0f;
-
   float mCameraLookX = 0.0f;
   float mCameraLookY = 0.0f;
   float mCameraLookZ = -1.0f;

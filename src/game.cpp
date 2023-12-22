@@ -14,9 +14,9 @@ Game::Game() {
 
   mVulkanRenderer = new VulkanEngine::VulkanRenderer(mWindow);
 
-  mVulkanRenderer->mCameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
-  
   mVulkanRenderer->mCameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+  mVulkanRenderer->mCameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
+  mVulkanRenderer->mCameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 
   isRunning = true;
   mLastTimestamp = std::chrono::high_resolution_clock::now();
@@ -65,22 +65,70 @@ std::string Game::getEvent() {
         eventName = "EXIT";
         isRunning = false;
         break;
-      case SDLK_LEFT:
+      case SDLK_LEFT: {
         eventName = "MOVE_LEFT";
-        mVulkanRenderer->mCameraLookX += 0.1f;
+        float rotationSpeed = -mLookSpeed * mDeltaTime;
+        float cosTheta = cos(glm::radians(rotationSpeed));
+        float sinTheta = sin(glm::radians(rotationSpeed));
+
+        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
+
+        // Using the standard 2D rotation matrix
+        rotation.x = (rotation.x * cosTheta) - (rotation.z * sinTheta);
+        rotation.z = (rotation.x * sinTheta) + (rotation.z * cosTheta);
+        rotation = glm::normalize(rotation);
+        mVulkanRenderer->mCameraFront =  rotation;
+ 
         break;
-      case SDLK_RIGHT:
+      }
+      case SDLK_RIGHT: {
         eventName = "MOVE_RIGHT";
-        mVulkanRenderer->mCameraLookX -= 0.1f;
+
+        float rotationSpeed = mLookSpeed * mDeltaTime;
+        float cosTheta = cos(glm::radians(rotationSpeed));
+        float sinTheta = sin(glm::radians(rotationSpeed));
+
+        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
+
+        // Using the standard 2D rotation matrix
+        rotation.x = (rotation.x * cosTheta) - (rotation.z * sinTheta);
+        rotation.z = (rotation.x * sinTheta) + (rotation.z * cosTheta);
+        rotation = glm::normalize(rotation);
+        mVulkanRenderer->mCameraFront =  rotation;
         break;
-      case SDLK_UP:
+      }
+      case SDLK_UP: {
         eventName = "MOVE_UP";
-        mVulkanRenderer->mCameraLookY += 0.1f;
+        float rotationSpeed = -mLookSpeed * mDeltaTime;
+        float cosTheta = cos(glm::radians(rotationSpeed));
+        float sinTheta = sin(glm::radians(rotationSpeed));
+
+        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
+
+        // Using the standard 2D rotation matrix
+        rotation.y = (rotation.y * cosTheta) - (rotation.z * sinTheta);
+        rotation.z = (rotation.y * sinTheta) + (rotation.z * cosTheta);
+        rotation = glm::normalize(rotation);
+        mVulkanRenderer->mCameraFront =  rotation;
+ 
         break;
-      case SDLK_DOWN:
+      }
+      case SDLK_DOWN: {
         eventName = "MOVE_DOWN";
-        mVulkanRenderer->mCameraLookY -= 0.1f;
+        float rotationSpeed = mLookSpeed * mDeltaTime;
+        float cosTheta = cos(glm::radians(rotationSpeed));
+        float sinTheta = sin(glm::radians(rotationSpeed));
+
+        glm::vec3 rotation = mVulkanRenderer->mCameraFront;
+
+        // Using the standard 2D rotation matrix
+        rotation.y = (rotation.y * cosTheta) - (rotation.z * sinTheta);
+        rotation.z = (rotation.y * sinTheta) + (rotation.z * cosTheta);
+        rotation = glm::normalize(rotation);
+        mVulkanRenderer->mCameraFront =  rotation;
+ 
         break;
+      }
       case SDLK_e: {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
@@ -128,13 +176,13 @@ std::string Game::getEvent() {
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mCameraPosY -= 0.1f;
+        //mVulkanRenderer->mCameraPosY -= 0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mCameraPosY += 0.1f;
+        //mVulkanRenderer->mCameraPosY += 0.1f;
         break;
       }
       default:

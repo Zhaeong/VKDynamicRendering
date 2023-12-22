@@ -19,6 +19,7 @@ public:
   std::chrono::time_point<std::chrono::high_resolution_clock> mLastTimestamp;
   float mDeltaTime;
   float mMoveSpeed = 0.1f;
+  float mLookSpeed = 5.0f;
   SDL_Window *mWindow;
   VulkanEngine::VulkanRenderer *mVulkanRenderer;
 
