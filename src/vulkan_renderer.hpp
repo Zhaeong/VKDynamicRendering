@@ -105,14 +105,12 @@ public:
 
 
   //===================================================
-  float mCameraLookX = 0.0f;
-  float mCameraLookY = 0.0f;
-  float mCameraLookZ = -1.0f;
-
-
   glm::vec3 mCameraPos;
   glm::vec3 mCameraFront;
   glm::vec3 mCameraUp;
+
+  glm::mat4 mViewMatrix;
+  glm::mat4 mCameraRotation;
 
   //===================================================
   // Functions
