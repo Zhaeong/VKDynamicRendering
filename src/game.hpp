@@ -20,7 +20,8 @@ public:
   float mDeltaTime;
   float mMoveSpeed = 0.1f;
   float mLookSpeed = 5.0f;
-  float mYaw = -90.0;
+  // These are chosen to match the default rotation == (0, 0, -1)
+  float mYaw = -90.0; // because cos(0) == 1, we don't want positive z direction, we want sin(-90) == -1 so rotation.z == -1
   float mPitch = 0;
   SDL_Window *mWindow;
   VulkanEngine::VulkanRenderer *mVulkanRenderer;
