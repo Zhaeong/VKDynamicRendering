@@ -26,6 +26,7 @@ public:
   // These are chosen to match the default rotation == (0, 0, -1)
   float mYaw = 0.0f; // because cos(0) == 1, we don't want positive z direction, we want sin(-90) == -1 so rotation.z == -1
   float mPitch = 0.0f;
+  //float mRoll = 0.0f;
 
   glm::mat4 mCameraRotation;
 

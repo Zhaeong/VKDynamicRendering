@@ -108,10 +108,12 @@ std::string Game::getEvent() {
       case SDLK_e: {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
+        //mRoll += mLookSpeed * mDeltaTime;
         break;
       }
       case SDLK_q: {
         eventName = "KEY_Q";
+        //mRoll -= mLookSpeed * mDeltaTime;
         std::cout << "Event: " << eventName << "\n";
         break;
       }
@@ -289,7 +291,7 @@ glm::mat4 Game::calculateViewMatrixQuat(glm::vec3 position) {
   //FPS camera:  RotationX(pitch) * RotationY(yaw)
   glm::quat qPitch = glm::angleAxis(glm::radians(mPitch), glm::vec3(1, 0, 0));
   glm::quat qYaw = glm::angleAxis(glm::radians(mYaw), glm::vec3(0, 1, 0));
-  //  glm::quat qRoll = glm::angleAxis(roll,glm::vec3(0,0,1));  
+  //glm::quat qRoll = glm::angleAxis(mRoll ,glm::vec3(0,0,1));  
 
   //For a FPS camera we can omit roll
   glm::quat orientation = qPitch * qYaw;
