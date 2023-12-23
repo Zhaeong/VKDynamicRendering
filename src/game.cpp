@@ -123,10 +123,14 @@ std::string Game::getEvent() {
         std::cout << "deltaTime: " << mDeltaTime << "\n";
         std::cout << "MoveSpeed: " << moveSpeed << "\n";
         //glm is has column major matrices, so third column represents the forward vector
+        //view matrix:
+        //[ right_x, up_x, forward_x, position_x ]
+        //[ right_y, up_y, forward_y, position_y ]
+        //[ right_z, up_z, forward_z, position_z ]
+        //[ 0, 0, 0, 1]
         glm::vec3 cameraFront = glm::vec3(mVulkanRenderer->mViewMatrix[0][2],
                                           mVulkanRenderer->mViewMatrix[1][2],
                                           mVulkanRenderer->mViewMatrix[2][2]); 
-        //mVulkanRenderer->mCameraFront = cameraFront;
 
         std::cout << glm::to_string(cameraFront) << "\n";
         mVulkanRenderer->mCameraPos -= (cameraFront * mDeltaTime * mMoveSpeed);
@@ -136,8 +140,6 @@ std::string Game::getEvent() {
       case SDLK_s: {
         eventName = "KEY_S";
         std::cout << "Event: " << eventName << "\n";
-        //mVulkanRenderer->mCameraPos -= mVulkanRenderer->mCameraFront * mDeltaTime * mMoveSpeed;
-        //mVulkanRenderer->mCameraPos.z -= mDeltaTime * mMoveSpeed;
         glm::vec3 cameraFront = glm::vec3(mVulkanRenderer->mViewMatrix[0][2],
                                           mVulkanRenderer->mViewMatrix[1][2],
                                           mVulkanRenderer->mViewMatrix[2][2]);
@@ -147,26 +149,33 @@ std::string Game::getEvent() {
       case SDLK_a: {
         eventName = "KEY_A";
         std::cout << "Event: " << eventName << "\n";
-        // Get cross product of the front x up to get the perpendicular direction
-        mVulkanRenderer->mCameraPos -= glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
+        // Previous method was to get cross product of the front , and cross product the with the up to get the perpendicular direction
+        // mVulkanRenderer->mCameraPos -= glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
+        glm::vec3 cameraRight = glm::vec3(mVulkanRenderer->mViewMatrix[0][0],
+                                          mVulkanRenderer->mViewMatrix[1][0],
+                                          mVulkanRenderer->mViewMatrix[2][0]);
+        mVulkanRenderer->mCameraPos -= (cameraRight * mDeltaTime * mMoveSpeed);
+ 
         break;
       }
       case SDLK_d: {
         eventName = "KEY_D";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mCameraPos += glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
+        //mVulkanRenderer->mCameraPos += glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
+        glm::vec3 cameraRight = glm::vec3(mVulkanRenderer->mViewMatrix[0][0],
+                                          mVulkanRenderer->mViewMatrix[1][0],
+                                          mVulkanRenderer->mViewMatrix[2][0]);
+        mVulkanRenderer->mCameraPos += (cameraRight * mDeltaTime * mMoveSpeed);
         break;
       }
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
-        //mVulkanRenderer->mCameraPosY -= 0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
-        //mVulkanRenderer->mCameraPosY += 0.1f;
         break;
       }
       default:
