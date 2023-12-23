@@ -122,10 +122,11 @@ std::string Game::getEvent() {
         float moveSpeed = mDeltaTime * mMoveSpeed;
         std::cout << "deltaTime: " << mDeltaTime << "\n";
         std::cout << "MoveSpeed: " << moveSpeed << "\n";
-        
-        glm::vec3 cameraFront = glm::vec3(-mVulkanRenderer->mViewMatrix[2][0],
-                                          -mVulkanRenderer->mViewMatrix[2][1],
-                                          -mVulkanRenderer->mViewMatrix[2][2]);
+        //glm is has column major matrices, so third column represents the forward vector
+        glm::vec3 cameraFront = glm::vec3(mVulkanRenderer->mViewMatrix[0][2],
+                                          mVulkanRenderer->mViewMatrix[1][2],
+                                          mVulkanRenderer->mViewMatrix[2][2]); 
+        //mVulkanRenderer->mCameraFront = cameraFront;
 
         std::cout << glm::to_string(cameraFront) << "\n";
         mVulkanRenderer->mCameraPos -= (cameraFront * mDeltaTime * mMoveSpeed);
@@ -137,9 +138,9 @@ std::string Game::getEvent() {
         std::cout << "Event: " << eventName << "\n";
         //mVulkanRenderer->mCameraPos -= mVulkanRenderer->mCameraFront * mDeltaTime * mMoveSpeed;
         //mVulkanRenderer->mCameraPos.z -= mDeltaTime * mMoveSpeed;
-        glm::vec3 cameraFront = glm::vec3(-mVulkanRenderer->mViewMatrix[2][0],
-                                          -mVulkanRenderer->mViewMatrix[2][1],
-                                          -mVulkanRenderer->mViewMatrix[2][2]);
+        glm::vec3 cameraFront = glm::vec3(mVulkanRenderer->mViewMatrix[0][2],
+                                          mVulkanRenderer->mViewMatrix[1][2],
+                                          mVulkanRenderer->mViewMatrix[2][2]);
         mVulkanRenderer->mCameraPos += (cameraFront * mDeltaTime * mMoveSpeed);
         break;
       }
