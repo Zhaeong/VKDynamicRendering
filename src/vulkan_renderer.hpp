@@ -106,12 +106,9 @@ public:
 
   //===================================================
   glm::vec3 mCameraPos;
-  glm::vec3 mCameraFront;
-  glm::vec3 mCameraUp;
-
-  glm::mat4 mViewMatrix;
   glm::mat4 mCameraRotation;
 
+  glm::mat4 mViewMatrix;
   //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);

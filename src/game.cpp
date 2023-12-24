@@ -14,15 +14,8 @@ Game::Game() {
 
   mVulkanRenderer = new VulkanEngine::VulkanRenderer(mWindow);
 
-  mVulkanRenderer->mCameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
   mVulkanRenderer->mCameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
-  mVulkanRenderer->mCameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 
-  /*
-  mVulkanRenderer->mViewMatrix = calculateViewMatrix(mVulkanRenderer->mCameraPos,
-                                                     mVulkanRenderer->mCameraPos + mVulkanRenderer->mCameraFront,
-                                                     mVulkanRenderer->mCameraUp);
-                                                     */
   mVulkanRenderer->mViewMatrix = calculateViewMatrixQuat(mVulkanRenderer->mCameraPos);
 
   // instantiate to identiy matrix
@@ -55,9 +48,17 @@ void Game::run() {
     mDeltaTime = (float)std::chrono::duration<double, std::milli>(currentTime - mLastTimestamp).count();
     //std::cout << "timer: " << mDeltaTime << "\n";
     mLastTimestamp = std::chrono::high_resolution_clock::now();
-    //float fps = 1000.0f/mDeltaTime;
+    float fps = 1000.0f/mDeltaTime;
     //std::cout << "fps: " << fps << "\n";
 
+
+    mVulkanRenderer->mTextOverlay->beginTextUpdate();
+    mVulkanRenderer->mTextOverlay->addText("FPS: " + std::to_string(fps) + " FrameTime:" + std::to_string(mDeltaTime), 0.0f, 0.0f, TextOverlay::alignLeft);
+    mVulkanRenderer->mTextOverlay->addText("Camera Pos- X:" + std::to_string(mVulkanRenderer->mCameraPos.x) + 
+                        " Y:"  + std::to_string(mVulkanRenderer->mCameraPos.y) + 
+                        " Z:"  + std::to_string(mVulkanRenderer->mCameraPos.z), 0.0f, 30.0f, TextOverlay::alignLeft);
+                        
+    mVulkanRenderer->mTextOverlay->endTextUpdate();
     mVulkanRenderer->drawFrame();
     //SDL_Delay(10);
     //   isRunning = false;
@@ -134,7 +135,7 @@ std::string Game::getEvent() {
                                           mVulkanRenderer->mViewMatrix[1][2],
                                           mVulkanRenderer->mViewMatrix[2][2]); 
 
-        std::cout << glm::to_string(cameraFront) << "\n";
+        //std::cout << glm::to_string(cameraFront) << "\n";
         mVulkanRenderer->mCameraPos -= (cameraFront * mDeltaTime * mMoveSpeed);
 
         break;
@@ -151,7 +152,8 @@ std::string Game::getEvent() {
       case SDLK_a: {
         eventName = "KEY_A";
         std::cout << "Event: " << eventName << "\n";
-        // Previous method was to get cross product of the front , and cross product the with the up to get the perpendicular direction
+        // Previous method was to get cross product of the front, and cross product the with the up to get the perpendicular direction
+        // This is kept here for posterity
         // mVulkanRenderer->mCameraPos -= glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
         glm::vec3 cameraRight = glm::vec3(mVulkanRenderer->mViewMatrix[0][0],
                                           mVulkanRenderer->mViewMatrix[1][0],
@@ -163,7 +165,6 @@ std::string Game::getEvent() {
       case SDLK_d: {
         eventName = "KEY_D";
         std::cout << "Event: " << eventName << "\n";
-        //mVulkanRenderer->mCameraPos += glm::normalize(glm::cross(mVulkanRenderer->mCameraFront, mVulkanRenderer->mCameraUp)) * mDeltaTime * mMoveSpeed;
         glm::vec3 cameraRight = glm::vec3(mVulkanRenderer->mViewMatrix[0][0],
                                           mVulkanRenderer->mViewMatrix[1][0],
                                           mVulkanRenderer->mViewMatrix[2][0]);
@@ -196,7 +197,6 @@ std::string Game::getEvent() {
       SDL_GetMouseState(&posX, &posY);
       std::cout << "MouseX: " << posX << " MouseY:" << posY << "\n";
 
-      std::cout << glm::to_string(mCameraRotation) << std::endl;
       VulkanHelper::convertPixelToNormalizedDeviceCoord(mVulkanRenderer->mSwapChainExtent, posX, posY);
       if(event.button.button == SDL_BUTTON_LEFT) {
         std::cout << "Left mouse pressed\n";
@@ -253,7 +253,7 @@ void Game::updateRotation(){
   rotation.z = sinYaw * cosPitch;
 
   rotation = glm::normalize(rotation);
-  mVulkanRenderer->mCameraFront = rotation;
+  //mVulkanRenderer->mCameraFront = rotation;
 
 }
 

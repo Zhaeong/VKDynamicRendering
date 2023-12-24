@@ -944,14 +944,6 @@ void VulkanRenderer::createDescriptorSets()
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
-  // static auto startTime = std::chrono::high_resolution_clock::now();
-
-  // auto currentTime = std::chrono::high_resolution_clock::now();
-  // float time = std::chrono::duration<float, std::chrono::seconds::period>(
-  //                 currentTime - startTime)
-  //                 .count();
-
-
   Utils::UniformBufferObject ubo{};
 
   //The position of the model in world space
@@ -964,7 +956,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
   //mCameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
   //mCameraFront = glm::normalize(mCameraFront);
-  glm::vec3 cameraLook = mCameraPos + mCameraFront; 
+  //glm::vec3 cameraLook = mCameraPos + mCameraFront; 
 
   /*
   ubo.view = glm::lookAt(
@@ -980,21 +972,6 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // setting camera pos to (0, 0, 2) and looking at (0, 0, 0) means it's directly over the model
   // and setting the up vector to be +x means it's seeing it directly on the model
   // that means it's basically what it looks like without and MVP transformations, useful for a 1-1 mapping of model to camera space
-
-  mTextOverlay->beginTextUpdate();
-  mTextOverlay->addText("Camera Pos- X:" + std::to_string(mCameraPos.x) + 
-                        " Y:"  + std::to_string(mCameraPos.y) + 
-                        " Z:"  + std::to_string(mCameraPos.z), 0.0f, 0.0f, TextOverlay::alignLeft);
-  mTextOverlay->addText("Camera Look- X:" + std::to_string(cameraLook.x) + 
-                        " Y:"  + std::to_string(cameraLook.y) + 
-                        " Z:"  + std::to_string(cameraLook.z), 0.0f, 30.0f, TextOverlay::alignLeft);
-  mTextOverlay->addText("Camera Front - X:" + std::to_string(mCameraFront.x) + 
-                        " Y:"  + std::to_string(mCameraFront.y) + 
-                        " Z:"  + std::to_string(mCameraFront.z), 0.0f, 60.0f, TextOverlay::alignLeft);
-
-
-
-  mTextOverlay->endTextUpdate();
 
 
   ubo.proj = glm::perspective(
