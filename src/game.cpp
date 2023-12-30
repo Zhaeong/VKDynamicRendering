@@ -7,6 +7,7 @@ Game::Game() {
                  SDL_GetError());
   }
 
+  mGLTFLoader = new GLTF::GLTFLoader();
   mWindow = SDL_CreateWindow("SDL Vulkan Sample", SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, GameEngine::WIDTH,
                             GameEngine::HEIGHT,

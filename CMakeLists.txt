@@ -31,6 +31,9 @@ project(VKGame VERSION 1.0)
 
 # Debug
 # devenv /DebugExe Debug/VKGame.exe
+#
+# To Regenerate the compile_commands.json
+# Open Visual Studio->Project->Clang Power Tools->Export Compilation Database
 
 find_package(Vulkan REQUIRED)
 
@@ -66,12 +69,14 @@ if(WIN32)
         "src/game.cpp"
         "src/vulkan_renderer.cpp"
         "src/text_overlay.cpp"
+        "src/gltf_loader.cpp"
         "src/main.cpp")
 ELSEIF(UNIX)
     add_executable (VKGame
         "src/game.cpp"
         "src/vulkan_renderer.cpp"
         "src/text_overlay.cpp"
+        "src/gltf_loader.cpp"
         "src/main.cpp")
 ENDIF(WIN32)
 

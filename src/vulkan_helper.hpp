@@ -12,8 +12,8 @@
 #include <cstring>
 
 // for loading stb image function objs
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_STATIC
+//#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_STATIC
 #include <stb_image.h>
 
 namespace VulkanHelper {

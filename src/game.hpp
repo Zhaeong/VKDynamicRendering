@@ -5,10 +5,12 @@
 #include <iostream>
 #include <string>
 
+#include <gltf_loader.hpp>
 #include <vulkan_renderer.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+
 
 namespace GameEngine {
 
@@ -31,6 +33,7 @@ public:
   glm::mat4 mCameraRotation;
 
   SDL_Window *mWindow;
+  GLTF::GLTFLoader *mGLTFLoader;
   VulkanEngine::VulkanRenderer *mVulkanRenderer;
 
   bool mIsCameraMoving = false;
