@@ -1,7 +1,9 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
+#include <SDL2/SDL.h>
 
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an

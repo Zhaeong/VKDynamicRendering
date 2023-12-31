@@ -84,7 +84,8 @@ public:
   // unitialized
 
   std::vector<Utils::Vertex> mVertices;
-  std::vector<uint16_t> mIndices;
+  std::vector<uint32_t> mIndices;
+
   VkBuffer mVertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
 
@@ -115,6 +116,7 @@ public:
   ~VulkanRenderer();
 
   // Initial object creation
+  void beginVulkanObjectCreation();
   void createInstance();
   void pickPhysicalDevice();
   void createLogicalDevice();
@@ -141,7 +143,7 @@ public:
 
   // Pipeline inputs
   void createVertexBuffer(std::vector<Utils::Vertex> vertices);
-  void createIndexBuffer(std::vector<uint16_t> indices);
+  void createIndexBuffer(std::vector<uint32_t> indices);
   void createUniformBuffers(int number);
 
   void loadTextures();
@@ -167,7 +169,7 @@ public:
   void drawFromDescriptors(VkCommandBuffer commandBuffer,
                            VkPipeline graphicsPipeline,
                            std::vector<Utils::Vertex> vertices,
-                           std::vector<uint16_t> indices,
+                           std::vector<uint32_t> indices,
                            VkBuffer vertexBuffer,
                            VkBuffer indexBuffer);
 

@@ -10,6 +10,40 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
     throw std::runtime_error("failed to create window surface!");
   }
 
+}
+
+VulkanRenderer::~VulkanRenderer() {
+  vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
+
+  vkDestroyBuffer(mLogicalDevice, mIndexBuffer, nullptr);
+  vkFreeMemory(mLogicalDevice, mIndexBufferMemory, nullptr);
+
+  for (size_t i = 0; i < mUniformBuffers.size(); i++) {
+    vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
+    vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
+  }
+
+  for (auto imageView : mSwapChainImageViews) {
+    vkDestroyImageView(mLogicalDevice, imageView, nullptr);
+  }
+  vkDestroySwapchainKHR(mLogicalDevice, mSwapChain, nullptr);
+
+  for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
+    vkDestroySemaphore(mLogicalDevice, mRenderFinishedSemaphores[i], nullptr);
+    vkDestroySemaphore(mLogicalDevice, mImageAvailableSemaphores[i], nullptr);
+    vkDestroyFence(mLogicalDevice, mInFlightFences[i], nullptr);
+  }
+
+  vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
+  vkDestroyDevice(mLogicalDevice, nullptr);
+  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+  vkDestroyInstance(mInstance, nullptr);
+}
+
+
+void VulkanRenderer::beginVulkanObjectCreation(){
+
   pickPhysicalDevice();
   createLogicalDevice();
 
@@ -61,6 +95,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   //                                        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},    //bottom right
   //                                        {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}};  //bottom left
 
+  /*
   std::vector<Utils::Vertex> vertices = {
                                          {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, 
                                          {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  
@@ -72,6 +107,7 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
                                          {{0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
                                          {{-0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
                                          };  //bottom left
+  */
 
                                          
   //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
@@ -81,10 +117,12 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
   //p1 = {v1, v3, v2}
   
-  createVertexBuffer(vertices);
+  createVertexBuffer(mVertices);
   //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  /*
   mIndices = {0, 1, 2, 2, 3, 0,
               4, 5, 6, 6, 7, 4};
+              */
 
   // mIndices = {0, 1, 2, 2, 3, 0};
 
@@ -117,35 +155,8 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
   createDescriptorSets();
 
   buildDrawingCommandBuffers();
-}
 
-VulkanRenderer::~VulkanRenderer() {
-  vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
-  vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
 
-  vkDestroyBuffer(mLogicalDevice, mIndexBuffer, nullptr);
-  vkFreeMemory(mLogicalDevice, mIndexBufferMemory, nullptr);
-
-  for (size_t i = 0; i < mUniformBuffers.size(); i++) {
-    vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
-    vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
-  }
-
-  for (auto imageView : mSwapChainImageViews) {
-    vkDestroyImageView(mLogicalDevice, imageView, nullptr);
-  }
-  vkDestroySwapchainKHR(mLogicalDevice, mSwapChain, nullptr);
-
-  for (size_t i = 0; i < mImageAvailableSemaphores.size(); i++) {
-    vkDestroySemaphore(mLogicalDevice, mRenderFinishedSemaphores[i], nullptr);
-    vkDestroySemaphore(mLogicalDevice, mImageAvailableSemaphores[i], nullptr);
-    vkDestroyFence(mLogicalDevice, mInFlightFences[i], nullptr);
-  }
-
-  vkDestroyCommandPool(mLogicalDevice, mCommandPool, nullptr);
-  vkDestroyDevice(mLogicalDevice, nullptr);
-  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
-  vkDestroyInstance(mInstance, nullptr);
 }
 
 void VulkanRenderer::createInstance() {
@@ -779,7 +790,7 @@ void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
 
-void VulkanRenderer::createIndexBuffer(std::vector<uint16_t> indices) {
+void VulkanRenderer::createIndexBuffer(std::vector<uint32_t> indices) {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
   VkBuffer stagingBuffer;
@@ -1080,7 +1091,7 @@ void VulkanRenderer::drawFromIndices(VkCommandBuffer commandBuffer,
 void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
                                          VkPipeline graphicsPipeline,
                                          std::vector<Utils::Vertex> vertices,
-                                         std::vector<uint16_t> indices,
+                                         std::vector<uint32_t> indices,
                                          VkBuffer vertexBuffer,
                                          VkBuffer indexBuffer) {
 
@@ -1099,10 +1110,13 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
                           &mDescriptorSets[mTextures[0].descriptor_set_index], 0,
                           nullptr);
 
+  
   //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
   //first rect
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+  //vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
+  /*
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           mPipelineLayout, 0, 1,
                           &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
@@ -1110,6 +1124,7 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 
   //second rect
   vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
+  */
 
 }
 

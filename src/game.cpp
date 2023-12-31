@@ -22,6 +22,11 @@ Game::Game() {
   // instantiate to identiy matrix
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
+  mVulkanRenderer->mVertices = mGLTFLoader->mVertices;
+  mVulkanRenderer->mIndices = mGLTFLoader->mIndices;
+
+  mVulkanRenderer->beginVulkanObjectCreation();
+
   isRunning = true;
   mLastTimestamp = std::chrono::high_resolution_clock::now();
 }
