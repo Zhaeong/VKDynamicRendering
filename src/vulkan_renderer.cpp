@@ -659,8 +659,8 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
   // pRasterizationState
   //================================================================================================
-  VkPipelineRasterizationStateCreateInfo rasterizationState = 
-    VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+  //VkPipelineRasterizationStateCreateInfo rasterizationState = VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+  VkPipelineRasterizationStateCreateInfo rasterizationState = VulkanInit::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
   PIPElineInfo.pRasterizationState = &rasterizationState;
   //================================================================================================
@@ -1101,20 +1101,21 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
   VkBuffer vertexBuffers[] = {vertexBuffer};
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
-                       VK_INDEX_TYPE_UINT16);
+
+  //vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
   
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           mPipelineLayout, 0, 1,
                           &mDescriptorSets[mTextures[0].descriptor_set_index], 0,
                           nullptr);
-
+ 
   
   //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
   //first rect
   //vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-  vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, (uint32_t)indices.size(), 1, 0, 0, 0);
 
   /*
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

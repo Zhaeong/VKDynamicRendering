@@ -19,7 +19,8 @@ GLTFLoader::GLTFLoader(){
 
   std::filesystem::path p = std::filesystem::current_path();
 
-  bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/teststuff/teststuff.gltf"));
+  //bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/box/Box.gltf"));
+  bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/cube/cube.gltf"));
   if (!warn.empty()) {
     printf("Warn: %s\n", warn.c_str());
   }
@@ -42,6 +43,14 @@ GLTFLoader::GLTFLoader(){
 
 void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
   std::cout<< "looking at: " << node.name << "\n";
+
+  // Load node's children
+  if (node.children.size() > 0) {
+      for (size_t i = 0; i < node.children.size(); i++) {
+          loadNode(model.nodes[node.children[i]], model);
+      }
+  }
+
   if(node.mesh > -1) {
     std::cout<< "mesh index: " << node.mesh << "\n";
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
@@ -70,10 +79,12 @@ void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
         Utils::Vertex vertex{};
         glm::vec3 position = glm::make_vec3(&positionBuffer[v * 3]);
         //glm::vec3 position2 =glm::vec4(glm::make_vec3(&positionBuffer[v * 3]), 1.0f);
-        //std::cout << glm::to_string(position) << "\n";
+        std::cout << glm::to_string(position) << "\n";
         vertex.pos = position;
         vertex.color =  glm::vec3(1.0f, 0.0f, 0.0f);
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
+
+        //std::cout << glm::to_string(vertex.color) << "\n";
 
         mVertices.push_back(vertex);
       }
@@ -112,12 +123,12 @@ void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
           return;
       }
 
-      /*
+      
       for (auto i: mIndices){
         std::cout << i << ' ';
       }
       std::cout << " indices size: " << mIndices.size() << "\n";
-      */
+      
     }
   }
 
