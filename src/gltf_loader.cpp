@@ -21,6 +21,8 @@ GLTFLoader::GLTFLoader(){
 
   //bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/box/Box.gltf"));
   bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/cube/cube.gltf"));
+  //bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/teststuff/teststuff.gltf"));
+
   if (!warn.empty()) {
     printf("Warn: %s\n", warn.c_str());
   }
@@ -75,16 +77,35 @@ void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
 				vertexCount = position_accessor.count;
       }
 
+      //=============
+      //Normals
+      //=============
+      const float* normalBuffer = nullptr;
+      if (glTFPrimitive.attributes.find("NORMAL") != glTFPrimitive.attributes.end()) {
+        const tinygltf::Accessor& normal_accessor = model.accessors[glTFPrimitive.attributes.find("NORMAL")->second];
+				const tinygltf::BufferView& normal_bufferView = model.bufferViews[normal_accessor.bufferView];
+				normalBuffer = reinterpret_cast<const float*>(
+                            &(model.buffers[normal_bufferView.buffer].data[normal_accessor.byteOffset + normal_bufferView.byteOffset])
+                            );
+				
+      }
+
+      // Push relevant vertex and normal data into the relevant objects
       for(size_t v = 0; v < vertexCount; v++) {
         Utils::Vertex vertex{};
         glm::vec3 position = glm::make_vec3(&positionBuffer[v * 3]);
         //glm::vec3 position2 =glm::vec4(glm::make_vec3(&positionBuffer[v * 3]), 1.0f);
-        std::cout << glm::to_string(position) << "\n";
+        //std::cout << glm::to_string(position) << "\n";
         vertex.pos = position;
         vertex.color =  glm::vec3(1.0f, 0.0f, 0.0f);
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
 
         //std::cout << glm::to_string(vertex.color) << "\n";
+        if(normalBuffer) {
+          glm::vec3 normal = glm::make_vec3(&normalBuffer[v * 3]);
+          vertex.normal = normal;
+          std::cout << glm::to_string(normal) << "\n";
+        }
 
         mVertices.push_back(vertex);
       }
