@@ -1001,6 +1001,8 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
                          5.0f); // far
   */
 
+  ubo.light = glm::vec4(5.0f, 5.0f, 5.0f, 1.0f);
+
   void *data;
   vkMapMemory(mLogicalDevice,
               mUniformBuffersMemory[currentImage], 0, sizeof(ubo),
