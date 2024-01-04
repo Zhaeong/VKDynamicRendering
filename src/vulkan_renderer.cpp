@@ -1001,15 +1001,22 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
                          5.0f); // far
   */
 
-  ubo.light = glm::vec4(5.0f, 5.0f, 5.0f, 1.0f);
+  //Rotate the light by the y axis by degrees
 
-  void *data;
-  vkMapMemory(mLogicalDevice,
-              mUniformBuffersMemory[currentImage], 0, sizeof(ubo),
-              0, &data);
-  memcpy(data, &ubo, sizeof(ubo));
-  vkUnmapMemory(mLogicalDevice,
-                mUniformBuffersMemory[currentImage]);
+  glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(mLightRot),  glm::vec3(0.0f, 1.0f, 0.0f));
+
+  glm::vec4 originalPos = glm::vec4(5.0f, 10.0f, 5.0f, 1.0f);
+
+  ubo.light = originalPos * rot_mat;
+  
+  // std::cout << mLightRot << "\n";
+  // std::cout << glm::to_string(rot_mat) << "\n";
+  // std::cout << glm::to_string(ubo.light) << "\n";
+
+  void *data; vkMapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data); 
+  memcpy(data, &ubo, sizeof(ubo)); 
+
+  vkUnmapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage]);
 }
 
 void VulkanRenderer::cleanupSwapChain() {

@@ -15,6 +15,7 @@
 // #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <chrono>
 
 namespace VulkanEngine {
@@ -110,6 +111,8 @@ public:
   glm::mat4 mCameraRotation;
 
   glm::mat4 mViewMatrix;
+
+  float mLightRot = 0.0f;
   //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);
