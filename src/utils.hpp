@@ -82,6 +82,7 @@ struct UniformBufferObject {
   glm::mat4 view;
   glm::mat4 proj;
   glm::vec4 light;
+  glm::vec3 camPos;
 };
 
 struct Texture {

@@ -7,7 +7,7 @@ layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in vec3 inFragPos;
 layout(location = 3) in vec3 inNormal;
 layout(location = 4) in vec3 inLightPos;
-
+layout(location = 5) in vec3 inCameraView;
 
 layout (location = 0) out vec4 outColor;
 
@@ -15,6 +15,8 @@ void main() {
     //rgb, alpha
     //outColor = texture(texSampler, fragTexCoord);
     vec3 norm = normalize(inNormal);
+
+
     vec3 lightDir = normalize(inLightPos - inFragPos);
     //debugPrintfEXT("Light dir is %v3f", lightDir);
     //debugPrintfEXT("pos is %v3f", inFragPos);
@@ -29,9 +31,19 @@ void main() {
     vec3 diffuse =  diffuseStrength * lightColor;
 
 
+    vec3 viewDir = normalize(inCameraView);
+
+    float specularStrength = 0.5;
+    // Reflect the lightDirection, and calcuate angle between reflect and viewDir)
+    vec3 reflectDir = reflect(lightDir, norm);
+
+    int shininess = 128;
+    float specularPower = pow(max(dot(viewDir, reflectDir), 0), shininess);
+
+    vec3 specular = specularStrength * specularPower * lightColor;
 
 
-    vec3 result = diffuse * inColor;
+    vec3 result = (diffuse + specular) * inColor;
     // outColor = vec4(inColor, 1.0);
     outColor = vec4(result, 1.0);
 

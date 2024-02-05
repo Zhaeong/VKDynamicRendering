@@ -116,6 +116,7 @@ std::string Game::getEvent() {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
         mVulkanRenderer->mLightRot+=1;
+
         //mRoll += mLookSpeed * mDeltaTime;
         break;
       }

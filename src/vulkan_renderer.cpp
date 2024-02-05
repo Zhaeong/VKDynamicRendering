@@ -1005,9 +1005,11 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
   glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(mLightRot),  glm::vec3(0.0f, 1.0f, 0.0f));
 
-  glm::vec4 originalPos = glm::vec4(5.0f, 10.0f, 5.0f, 1.0f);
+  glm::vec4 originalPos = glm::vec4(5.0f, 5.0f, 5.0f, 1.0f);
 
   ubo.light = originalPos * rot_mat;
+
+  ubo.camPos = mCameraPos;
   
   // std::cout << mLightRot << "\n";
   // std::cout << glm::to_string(rot_mat) << "\n";
