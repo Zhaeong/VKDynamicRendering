@@ -58,6 +58,7 @@ void VulkanRenderer::beginVulkanObjectCreation(){
   mTextOverlay->addText("could It BE", static_cast<float>(mSwapChainExtent.width), 0.0f, TextOverlay::alignRight);
   mTextOverlay->endTextUpdate();
 
+  // mSwapChainImageCount is set inside createSwapChain()
   createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
   createSyncObjects(mSwapChainImageCount);
@@ -354,6 +355,7 @@ void VulkanRenderer::createSyncObjects(uint32_t number) {
 }
 
 void VulkanRenderer::buildDrawingCommandBuffers(){
+  // The size of mDrawingCommandBuffers is determined by createCommandBuffers(mSwapChainImageCount);
   for (int32_t i = 0; i < mDrawingCommandBuffers.size(); ++i) {
     VulkanHelper::beginDrawingCommandBuffer(mDrawingCommandBuffers[i]);
 
@@ -404,9 +406,6 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     clearColorDepth.depthStencil = {1.0f, 0};
     renderingDepthAttachmentInfo.clearValue = clearColorDepth;
     renderingInfo.pDepthAttachment = &renderingDepthAttachmentInfo;
-
-
-
   
     // dynamic rendering end
     //===============================================================
@@ -419,6 +418,8 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     //                                   mVertices,
     //                                   mVertexBuffer);
 
+
+    // For multiple objects, add more calls to drawFromDescriptors
     drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices,
                     mIndices, mVertexBuffer, mIndexBuffer);
 
@@ -450,8 +451,8 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
 
   // minimum + 1, and don't go over maximum
   mSwapChainImageCount = swapChainSupport.capabilities.minImageCount + 1;
-  if (swapChainSupport.capabilities.maxImageCount > 0 &&
-      mSwapChainImageCount > swapChainSupport.capabilities.maxImageCount) {
+  if (swapChainSupport.capabilities.maxImageCount > 0 
+      && mSwapChainImageCount > swapChainSupport.capabilities.maxImageCount) {
     mSwapChainImageCount = swapChainSupport.capabilities.maxImageCount;
   }
 
