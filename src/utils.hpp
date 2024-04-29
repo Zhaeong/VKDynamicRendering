@@ -101,11 +101,11 @@ struct Model{
   std::vector<Utils::Vertex> mVertices;
   std::vector<uint32_t> mIndices;
 
-  VkBuffer mVertexBuffer;
-  VkDeviceMemory mVertexBufferMemory;
+  VkBuffer mVertexBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
 
-  VkBuffer mIndexBuffer;
-  VkDeviceMemory mIndexBufferMemory;
+  VkBuffer mIndexBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory mIndexBufferMemory = VK_NULL_HANDLE;
 
   //std::vector<VkBuffer> mUniformBuffers;
   //std::vector<VkDeviceMemory> mUniformBuffersMemory;
