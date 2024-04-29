@@ -95,7 +95,7 @@ void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
         Utils::Vertex vertex{};
         glm::vec3 position = glm::make_vec3(&positionBuffer[v * 3]);
         //glm::vec3 position2 =glm::vec4(glm::make_vec3(&positionBuffer[v * 3]), 1.0f);
-        //std::cout << glm::to_string(position) << "\n";
+        //std::cout << "index:" << v << glm::to_string(position) << "\n";
         vertex.pos = position;
         vertex.color =  glm::vec3(1.0f, 0.0f, 0.0f);
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
@@ -104,7 +104,7 @@ void GLTFLoader::loadNode(tinygltf::Node node, tinygltf::Model model){
         if(normalBuffer) {
           glm::vec3 normal = glm::make_vec3(&normalBuffer[v * 3]);
           vertex.normal = normal;
-          std::cout << glm::to_string(normal) << "\n";
+          //std::cout << "Normal:" << glm::to_string(normal) << "\n";
         }
 
         mVertices.push_back(vertex);

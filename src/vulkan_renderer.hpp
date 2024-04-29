@@ -84,8 +84,8 @@ public:
   // buffer, and VK_NULL_HANDLE is valid for vkDestroyBuffer when buffer in
   // unitialized
 
-  std::vector<Utils::Vertex> mVertices;
-  std::vector<uint32_t> mIndices;
+  //std::vector<Utils::Vertex> mVertices;
+  //std::vector<uint32_t> mIndices;
 
   VkBuffer mVertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
@@ -105,6 +105,10 @@ public:
 
   TextOverlay *mTextOverlay;
 
+  
+  //===================================================
+  //Models abstraction
+  std::vector<Utils::Model> mModels;
 
   //===================================================
   glm::vec3 mCameraPos;
@@ -145,8 +149,10 @@ public:
   void createGraphicsPipeline();
 
   // Pipeline inputs
-  void createVertexBuffer(std::vector<Utils::Vertex> vertices);
-  void createIndexBuffer(std::vector<uint32_t> indices);
+  //void createVertexBuffer(std::vector<Utils::Vertex> vertices);
+  void createVertexBuffer(std::vector<Utils::Vertex> vertices, VkBuffer *vertexBuffer, VkDeviceMemory *vertexBufferMemory);
+  //void createIndexBuffer(std::vector<uint32_t> indices);
+  void createIndexBuffer(std::vector<uint32_t> indices, VkBuffer *indexBuffer, VkDeviceMemory *indexBufferMemory); 
   void createUniformBuffers(int number);
 
   void loadTextures();

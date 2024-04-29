@@ -22,8 +22,20 @@ Game::Game() {
   // instantiate to identiy matrix
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
-  mVulkanRenderer->mVertices = mGLTFLoader->mVertices;
-  mVulkanRenderer->mIndices = mGLTFLoader->mIndices;
+  Utils::Model cubeModel;
+
+  cubeModel.mVertices = mGLTFLoader->mVertices;
+  cubeModel.mIndices = mGLTFLoader->mIndices;
+
+  mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
+  mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
+
+  // push back create copy
+  mVulkanRenderer->mModels.push_back(cubeModel);
+  
+
+  //mVulkanRenderer->mVertices = mGLTFLoader->mVertices;
+  //mVulkanRenderer->mIndices = mGLTFLoader->mIndices;
 
   mVulkanRenderer->beginVulkanObjectCreation();
 

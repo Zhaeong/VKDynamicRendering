@@ -10,6 +10,11 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
     throw std::runtime_error("failed to create window surface!");
   }
 
+  pickPhysicalDevice();
+  createLogicalDevice();
+
+  createCommandPool();
+
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -44,8 +49,8 @@ VulkanRenderer::~VulkanRenderer() {
 
 void VulkanRenderer::beginVulkanObjectCreation(){
 
-  pickPhysicalDevice();
-  createLogicalDevice();
+  //pickPhysicalDevice();
+  //createLogicalDevice();
 
   createSwapChain(mSurface);
   createSwapChainImageViews();
@@ -59,7 +64,6 @@ void VulkanRenderer::beginVulkanObjectCreation(){
   mTextOverlay->endTextUpdate();
 
   // mSwapChainImageCount is set inside createSwapChain()
-  createCommandPool();
   createCommandBuffers(mSwapChainImageCount);
   createSyncObjects(mSwapChainImageCount);
 
@@ -118,7 +122,8 @@ void VulkanRenderer::beginVulkanObjectCreation(){
   //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
   //p1 = {v1, v3, v2}
   
-  createVertexBuffer(mVertices);
+  // createVertexBuffer(mVertices);
+  
   //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   /*
   mIndices = {0, 1, 2, 2, 3, 0,
@@ -149,7 +154,7 @@ void VulkanRenderer::beginVulkanObjectCreation(){
   // VulkanHelper::calculateTriangleFaceDirection(p0, p1, p3); 
   // VulkanHelper::calculateTriangleFaceDirection(p1, p2, p3); 
 
-  createIndexBuffer(mIndices);
+  // createIndexBuffer(mIndices);
 
   createUniformBuffers(1);
   createDescriptorPool(1);
@@ -420,8 +425,14 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
 
 
     // For multiple objects, add more calls to drawFromDescriptors
-    drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices,
-                    mIndices, mVertexBuffer, mIndexBuffer);
+    //drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices, mIndices, mVertexBuffer, mIndexBuffer);
+
+    drawFromDescriptors(mDrawingCommandBuffers[i], 
+                        mGraphicsPipeline, 
+                        mModels[0].mVertices, 
+                        mModels[0].mIndices, 
+                        mModels[0].mVertexBuffer, 
+                        mModels[0].mIndexBuffer);
 
     vkCmdEndRendering(mDrawingCommandBuffers[i]);
 
@@ -760,20 +771,18 @@ void VulkanRenderer::createGraphicsPipeline() {
   //================================================================================================
 }
 
-void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
-
-  mVertices = vertices;
+void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices, VkBuffer *vertexBuffer, VkDeviceMemory *vertexBufferMemory) {
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
   // Create a staging buffer as source for cpu accessible then copy over to
   // actual bufffer
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
+  VkBuffer stagingBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
   VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                             stagingBuffer, stagingBufferMemory);
+                             &stagingBuffer, &stagingBufferMemory);
 
   void *data;
   vkMapMemory(mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -783,24 +792,26 @@ void VulkanRenderer::createVertexBuffer(std::vector<Utils::Vertex> vertices) {
   VulkanHelper::createBuffer(
       mPhysicalDevice, mLogicalDevice, bufferSize,
       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
+  std::cout << "GLTF Vector 1: \n";
   VulkanHelper::copyBuffer(mLogicalDevice, mCommandPool, mGraphicsQueue,
-                           stagingBuffer, mVertexBuffer, bufferSize);
+                           stagingBuffer, *vertexBuffer, bufferSize);
+  std::cout << "GLTF Vector 2: \n";
   vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
 
-void VulkanRenderer::createIndexBuffer(std::vector<uint32_t> indices) {
+void VulkanRenderer::createIndexBuffer(std::vector<uint32_t> indices, VkBuffer *indexBuffer, VkDeviceMemory *indexBufferMemory) {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
+  VkBuffer stagingBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
   VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                             stagingBuffer, stagingBufferMemory);
+                             &stagingBuffer, &stagingBufferMemory);
 
   void *data;
   vkMapMemory(mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -810,10 +821,10 @@ void VulkanRenderer::createIndexBuffer(std::vector<uint32_t> indices) {
   VulkanHelper::createBuffer(
       mPhysicalDevice, mLogicalDevice, bufferSize,
       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
   VulkanHelper::copyBuffer(mLogicalDevice, mCommandPool, mGraphicsQueue,
-                           stagingBuffer, mIndexBuffer, bufferSize);
+                           stagingBuffer, *indexBuffer, bufferSize);
 
   vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
@@ -830,7 +841,7 @@ void VulkanRenderer::createUniformBuffers(int number) {
                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        mUniformBuffers[i], mUniformBuffersMemory[i]);
+                        &mUniformBuffers[i], &mUniformBuffersMemory[i]);
   }
 
 }

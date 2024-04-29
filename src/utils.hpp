@@ -97,6 +97,20 @@ struct Texture {
   uint32_t descriptor_set_index;
 };
 
+struct Model{
+  std::vector<Utils::Vertex> mVertices;
+  std::vector<uint32_t> mIndices;
+
+  VkBuffer mVertexBuffer;
+  VkDeviceMemory mVertexBufferMemory;
+
+  VkBuffer mIndexBuffer;
+  VkDeviceMemory mIndexBufferMemory;
+
+  //std::vector<VkBuffer> mUniformBuffers;
+  //std::vector<VkDeviceMemory> mUniformBuffersMemory;
+};
+
 inline void showWindowFlags(int flags) {
 
   printf("\nFLAGS ENABLED: ( %d )\n", flags);

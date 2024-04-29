@@ -403,13 +403,13 @@ inline uint32_t findMemoryType(VkPhysicalDevice physicalDevice,
 
 inline void createBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
                          VkDeviceSize size, VkBufferUsageFlags usage,
-                         VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                         VkDeviceMemory &bufferMemory) {
+                         VkMemoryPropertyFlags properties, VkBuffer *buffer,
+                         VkDeviceMemory *bufferMemory) {
 
   VkBufferCreateInfo bufferInfo = VulkanInit::buffer_create_info(usage, size);
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+  if (vkCreateBuffer(device, &bufferInfo, nullptr, buffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to create buffer!");
   }
 
@@ -417,18 +417,18 @@ inline void createBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
   // First step of allocating memory to buffer requires querying its memory
   // requirements
   VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+  vkGetBufferMemoryRequirements(device, *buffer, &memRequirements);
 
   VkMemoryAllocateInfo allocInfo = VulkanInit::memory_allocate_info();
   allocInfo.allocationSize = memRequirements.size;
   allocInfo.memoryTypeIndex = findMemoryType(
       physicalDevice, memRequirements.memoryTypeBits, properties);
 
-  if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) !=
+  if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory) !=
       VK_SUCCESS) {
     throw std::runtime_error("failed to allocate buffer memory!");
   }
-  vkBindBufferMemory(device, buffer, bufferMemory, 0);
+  vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
 }
 
 inline VkCommandBuffer beginSingleTimeCommands(VkDevice device,
@@ -696,14 +696,14 @@ inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
 
   // Create a host-visible staging buffer that contains the raw image data
   // This buffer will be the data source for copying texture data to the optimal tiled image on the device
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
+  VkBuffer stagingBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
 
   createBuffer(physicalDevice, device, imageSize,
                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               stagingBuffer, stagingBufferMemory);
+               &stagingBuffer, &stagingBufferMemory);
   void *data;
   vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
   memcpy(data, pixels, static_cast<size_t>(imageSize));
