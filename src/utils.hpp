@@ -85,6 +85,10 @@ struct UniformBufferObject {
   glm::vec3 camPos;
 };
 
+struct UniformBufferObjectModel {
+  glm::mat4 modelPos;
+};
+
 struct Texture {
   std::string texPath;
   VkSampler sampler;

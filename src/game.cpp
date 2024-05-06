@@ -33,10 +33,6 @@ Game::Game() {
   // push back create copy
   mVulkanRenderer->mModels.push_back(cubeModel);
   
-
-  //mVulkanRenderer->mVertices = mGLTFLoader->mVertices;
-  //mVulkanRenderer->mIndices = mGLTFLoader->mIndices;
-
   mVulkanRenderer->beginVulkanObjectCreation();
 
   isRunning = true;

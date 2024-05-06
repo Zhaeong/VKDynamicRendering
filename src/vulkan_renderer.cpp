@@ -12,17 +12,20 @@ VulkanRenderer::VulkanRenderer(SDL_Window *sdlWindow) {
 
   pickPhysicalDevice();
   createLogicalDevice();
-
   createCommandPool();
 
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr);
-  vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr);
 
-  vkDestroyBuffer(mLogicalDevice, mIndexBuffer, nullptr);
-  vkFreeMemory(mLogicalDevice, mIndexBufferMemory, nullptr);
+  for (size_t i = 0; i < mModels.size(); i++)
+  {
+    vkDestroyBuffer(mLogicalDevice, mModels[i].mVertexBuffer, nullptr);
+    vkFreeMemory(mLogicalDevice, mModels[i].mVertexBufferMemory, nullptr);
+
+    vkDestroyBuffer(mLogicalDevice, mModels[i].mIndexBuffer, nullptr);
+    vkFreeMemory(mLogicalDevice, mModels[i].mIndexBufferMemory, nullptr);
+  }
 
   for (size_t i = 0; i < mUniformBuffers.size(); i++) {
     vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
@@ -900,14 +903,9 @@ void VulkanRenderer::setupDescriptorSetLayout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1),
       VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
-
-  // This is if we want to create multiple image samplers
-  // for (int i = 0; i < mTextures.size(); i++) {
-  //   VkDescriptorSetLayoutBinding imageSamplerBinding = VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, i + 1);
-  //   set_layout_bindings.push_back(imageSamplerBinding);
-  // }
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    VulkanInit::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -943,7 +941,8 @@ void VulkanRenderer::createDescriptorSets()
 	VK_CHECK(vkAllocateDescriptorSets(mLogicalDevice, &alloc_info, mDescriptorSets.data()), "vkAllocateDescriptorSets");
 
   for (size_t i = 0; i < mTextures.size(); i++) {
-    VkDescriptorBufferInfo            matrix_buffer_descriptor     = VulkanInit::create_descriptor_buffer(mUniformBuffers[0], sizeof(Utils::UniformBufferObject), 0);
+    VkDescriptorBufferInfo matrix_buffer_descriptor = VulkanInit::create_descriptor_buffer(mUniformBuffers[0], sizeof(Utils::UniformBufferObject), 0);
+    VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mUniformBuffers[0], sizeof(Utils::UniformBufferObjectModel), 0);
     VkDescriptorImageInfo environment_image_descriptor = VulkanInit::create_descriptor_texture(mTextures[i]);
     std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
           VulkanInit::write_descriptor_set_from_buffer(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
@@ -954,13 +953,6 @@ void VulkanRenderer::createDescriptorSets()
 
     std::cout << "Texture: " << mTextures[i].texPath << " descriptorsetindex: " << mTextures[i].descriptor_set_index << "\n";
 
-    //Allow for dynamic amount of texture samplers to be specified in shader bindings
-    // for (int j = 0; j < mTextures.size(); j++) {
-    //   VkDescriptorImageInfo environment_image_descriptor = VulkanInit::create_descriptor_texture(mTextures[j]);
-    //   VkWriteDescriptorSet descriptorWriteImgSampler = VulkanInit::write_descriptor_set_from_image(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, j + 1, &environment_image_descriptor);
-    //   write_descriptor_sets.push_back(descriptorWriteImgSampler);
-    //   std::cout << "writing texture: " << mTextures[j].texPath << " to descriptor sampler binding: " << j + 1 << "\n";
-    // }
     vkUpdateDescriptorSets(mLogicalDevice, static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
   }
 }
@@ -1029,7 +1021,6 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
   void *data; vkMapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data); 
   memcpy(data, &ubo, sizeof(ubo)); 
-
   vkUnmapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage]);
 }
 
@@ -1125,30 +1116,14 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  //vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
   vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
   
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           mPipelineLayout, 0, 1,
                           &mDescriptorSets[mTextures[0].descriptor_set_index], 0,
                           nullptr);
  
-  
-  //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-  //first rect
-  //vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
   vkCmdDrawIndexed(commandBuffer, (uint32_t)indices.size(), 1, 0, 0, 0);
-
-  /*
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          mPipelineLayout, 0, 1,
-                          &mDescriptorSets[mTextures[1].descriptor_set_index], 0,
-                          nullptr);
-
-  //second rect
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 6, 0, 0);
-  */
 
 }
 
