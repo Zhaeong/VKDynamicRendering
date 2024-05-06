@@ -3,7 +3,6 @@
 
 
 layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
     mat4 view;
     mat4 proj;
     vec4 light;
@@ -28,7 +27,7 @@ layout(location = 5) out vec3 outCameraView;
 
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model *  vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * uboModel.modelPos *  vec4(inPosition, 1.0);
     // fragColor = inColor;
     fragTexCoord = inTexCoord;
 
@@ -36,7 +35,7 @@ void main() {
     fragColor = inColor;
 
     // Output the position in world coord to feed into frag shader
-    outFragPos = vec3(ubo.model * vec4(inPosition, 1.0));
+    outFragPos = vec3(uboModel.modelPos * vec4(inPosition, 1.0));
 
     outNormal = inNormal;
 

@@ -84,11 +84,14 @@ public:
   // buffer, and VK_NULL_HANDLE is valid for vkDestroyBuffer when buffer in
   // unitialized
 
-  std::vector<VkBuffer> mUniformBuffers;
-  std::vector<VkDeviceMemory> mUniformBuffersMemory;
+  //std::vector<VkBuffer> mUniformBuffers;
+  //std::vector<VkDeviceMemory> mUniformBuffersMemory;
 
   VkBuffer mUBOScene;
   VkDeviceMemory mUBOSceneMemory;
+
+  VkBuffer mUBOModel;
+  VkDeviceMemory mUBOModelMemory;
 
   std::vector<Utils::Texture> mTextures;
 
@@ -147,7 +150,7 @@ public:
   void createVertexBuffer(std::vector<Utils::Vertex> vertices, VkBuffer *vertexBuffer, VkDeviceMemory *vertexBufferMemory);
   //void createIndexBuffer(std::vector<uint32_t> indices);
   void createIndexBuffer(std::vector<uint32_t> indices, VkBuffer *indexBuffer, VkDeviceMemory *indexBufferMemory); 
-  void createUniformBuffers(int number);
+  void createUniformBuffers();
 
   void loadTextures();
   

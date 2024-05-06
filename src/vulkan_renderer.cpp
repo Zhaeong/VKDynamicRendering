@@ -27,10 +27,10 @@ VulkanRenderer::~VulkanRenderer() {
     vkFreeMemory(mLogicalDevice, mModels[i].mIndexBufferMemory, nullptr);
   }
 
-  for (size_t i = 0; i < mUniformBuffers.size(); i++) {
-    vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
-    vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
-  }
+  //for (size_t i = 0; i < mUniformBuffers.size(); i++) {
+  //  vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
+  //  vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
+  //}
 
   for (auto imageView : mSwapChainImageViews) {
     vkDestroyImageView(mLogicalDevice, imageView, nullptr);
@@ -159,7 +159,7 @@ void VulkanRenderer::beginVulkanObjectCreation(){
 
   // createIndexBuffer(mIndices);
 
-  createUniformBuffers(1);
+  createUniformBuffers();
   createDescriptorPool(1);
   createDescriptorSets();
 
@@ -833,20 +833,23 @@ void VulkanRenderer::createIndexBuffer(std::vector<uint32_t> indices, VkBuffer *
   vkFreeMemory(mLogicalDevice, stagingBufferMemory, nullptr);
 }
 
-void VulkanRenderer::createUniformBuffers(int number) {
+void VulkanRenderer::createUniformBuffers() {
   VkDeviceSize bufferSize = sizeof(Utils::UniformBufferObject);
 
-  mUniformBuffers.resize(number);
-  mUniformBuffersMemory.resize(number);
-
-  for (size_t i = 0; i < number; i++) {
-    VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
+  VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSize,
                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        &mUniformBuffers[i], &mUniformBuffersMemory[i]);
-  }
+                        &mUBOScene, &mUBOSceneMemory);
 
+  VkDeviceSize bufferSizeModel = sizeof(Utils::UniformBufferObjectModel);
+
+  VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSizeModel,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        &mUBOModel, &mUBOModelMemory);
+ 
 }
 
 void VulkanRenderer::loadTextures() {
@@ -904,7 +907,7 @@ void VulkanRenderer::setupDescriptorSetLayout()
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
 	    VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1),
-      VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+      VulkanInit::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -941,12 +944,13 @@ void VulkanRenderer::createDescriptorSets()
 	VK_CHECK(vkAllocateDescriptorSets(mLogicalDevice, &alloc_info, mDescriptorSets.data()), "vkAllocateDescriptorSets");
 
   for (size_t i = 0; i < mTextures.size(); i++) {
-    VkDescriptorBufferInfo matrix_buffer_descriptor = VulkanInit::create_descriptor_buffer(mUniformBuffers[0], sizeof(Utils::UniformBufferObject), 0);
-    VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mUniformBuffers[0], sizeof(Utils::UniformBufferObjectModel), 0);
+    VkDescriptorBufferInfo matrix_buffer_descriptor = VulkanInit::create_descriptor_buffer(mUBOScene, sizeof(Utils::UniformBufferObject), 0);
+    VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mUBOModel, sizeof(Utils::UniformBufferObjectModel), 0);
     VkDescriptorImageInfo environment_image_descriptor = VulkanInit::create_descriptor_texture(mTextures[i]);
     std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
           VulkanInit::write_descriptor_set_from_buffer(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-          VulkanInit::write_descriptor_set_from_image(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor)
+          VulkanInit::write_descriptor_set_from_buffer(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &matrix_buffer_descriptor_model),
+          VulkanInit::write_descriptor_set_from_image(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &environment_image_descriptor)
       };
 
     mTextures[i].descriptor_set_index = static_cast<uint32_t>(i);
@@ -959,14 +963,23 @@ void VulkanRenderer::createDescriptorSets()
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
+  Utils::UniformBufferObjectModel uboModel{};
+  //uboModel.modelPos = glm::mat4(1.0f);
+  uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
+  void *dataModel; 
+  vkMapMemory(mLogicalDevice, mUBOModelMemory, 0, sizeof(uboModel), 0, &dataModel); 
+  memcpy(dataModel, &uboModel, sizeof(uboModel)); 
+  vkUnmapMemory(mLogicalDevice, mUBOModelMemory);  
+
   Utils::UniformBufferObject ubo{};
 
   //The position of the model in world space
-  glm::mat4 myIdentityMatrix = glm::mat4(1.0f);
+  //glm::mat4 myIdentityMatrix = glm::mat4(1.0f);
   // ubo.model = glm::rotate(myIdentityMatrix, time * glm::radians(90.0f),
   //                         glm::vec3(0.0f, 0.0f, 1.0f));
   // ubo.model = glm::scale(myIdentityMatrix, glm::vec3(20.0f, 20.0f ,20.0f)); //The position of the model in world space
-  ubo.model = myIdentityMatrix;
+  //ubo.model = myIdentityMatrix;
+
 
   // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
   //mCameraFront = glm::vec3(mCameraLookX, mCameraLookY, mCameraLookZ);
@@ -1019,9 +1032,9 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   // std::cout << glm::to_string(rot_mat) << "\n";
   // std::cout << glm::to_string(ubo.light) << "\n";
 
-  void *data; vkMapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data); 
+  void *data; vkMapMemory(mLogicalDevice, mUBOSceneMemory, 0, sizeof(ubo), 0, &data); 
   memcpy(data, &ubo, sizeof(ubo)); 
-  vkUnmapMemory(mLogicalDevice, mUniformBuffersMemory[currentImage]);
+  vkUnmapMemory(mLogicalDevice, mUBOSceneMemory);
 }
 
 void VulkanRenderer::cleanupSwapChain() {
