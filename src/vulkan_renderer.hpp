@@ -172,7 +172,8 @@ public:
                            std::vector<Utils::Vertex> vertices,
                            std::vector<uint32_t> indices,
                            VkBuffer vertexBuffer,
-                           VkBuffer indexBuffer);
+                           VkBuffer indexBuffer,
+                           VkDescriptorSet descriptorSet);
 
   void drawFrame();
 };

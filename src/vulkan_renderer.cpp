@@ -357,7 +357,8 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
                         mModels[0].mVertices, 
                         mModels[0].mIndices, 
                         mModels[0].mVertexBuffer, 
-                        mModels[0].mIndexBuffer);
+                        mModels[0].mIndexBuffer,
+                        mModels[0].mDescriptorSet);
 
     vkCmdEndRendering(mDrawingCommandBuffers[i]);
 
@@ -1083,7 +1084,8 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
                                          std::vector<Utils::Vertex> vertices,
                                          std::vector<uint32_t> indices,
                                          VkBuffer vertexBuffer,
-                                         VkBuffer indexBuffer) {
+                                         VkBuffer indexBuffer,
+                                         VkDescriptorSet descriptorSet) {
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     graphicsPipeline);
@@ -1094,9 +1096,7 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 
   vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
   
-  //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mTextures[0].descriptor_set_index], 0, nullptr);
-  
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mModels[0].mDescriptorSet, 0, nullptr);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
    
   vkCmdDrawIndexed(commandBuffer, (uint32_t)indices.size(), 1, 0, 0, 0);
 
