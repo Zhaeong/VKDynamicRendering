@@ -29,6 +29,7 @@ Game::Game() {
 
   mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
   mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
+  mVulkanRenderer->createUniformBufferForModel(&cubeModel.mUniformBuffer, &cubeModel.mUniformBuffersMemory);
 
   // push back create copy
   mVulkanRenderer->mModels.push_back(cubeModel);

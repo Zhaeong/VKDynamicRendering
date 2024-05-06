@@ -80,18 +80,11 @@ public:
   //===================================================
   // Pipeline inputs
 
-  // This is set first as VK_NULL_HANDLE, since we initially want to destroy
-  // buffer, and VK_NULL_HANDLE is valid for vkDestroyBuffer when buffer in
-  // unitialized
-
-  //std::vector<VkBuffer> mUniformBuffers;
-  //std::vector<VkDeviceMemory> mUniformBuffersMemory;
-
   VkBuffer mUBOScene;
   VkDeviceMemory mUBOSceneMemory;
 
-  VkBuffer mUBOModel;
-  VkDeviceMemory mUBOModelMemory;
+  //VkBuffer mUBOModel;
+  //VkDeviceMemory mUBOModelMemory;
 
   std::vector<Utils::Texture> mTextures;
 
@@ -152,10 +145,12 @@ public:
   void createIndexBuffer(std::vector<uint32_t> indices, VkBuffer *indexBuffer, VkDeviceMemory *indexBufferMemory); 
   void createUniformBuffers();
 
+  void createUniformBufferForModel(VkBuffer *modelBuffer, VkDeviceMemory *modelMemory);
   void loadTextures();
   
   void createDescriptorPool(int number);
   void createDescriptorSets();
+  void createDescriptorSetsModel();
 
   // Rendering functionality
 

@@ -104,14 +104,20 @@ struct Model{
   std::vector<Utils::Vertex> mVertices;
   std::vector<uint32_t> mIndices;
 
+  // This is set first as VK_NULL_HANDLE, since we initially want to destroy
+  // buffer, and VK_NULL_HANDLE is valid for vkDestroyBuffer when buffer in
+  // unitialized
+
   VkBuffer mVertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mVertexBufferMemory = VK_NULL_HANDLE;
 
   VkBuffer mIndexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mIndexBufferMemory = VK_NULL_HANDLE;
 
-  //std::vector<VkBuffer> mUniformBuffers;
-  //std::vector<VkDeviceMemory> mUniformBuffersMemory;
+  VkBuffer mUniformBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory mUniformBuffersMemory = VK_NULL_HANDLE;
+
+  VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
 };
 
 inline void showWindowFlags(int flags) {

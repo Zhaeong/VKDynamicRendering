@@ -79,89 +79,11 @@ void VulkanRenderer::beginVulkanObjectCreation(){
 
   createGraphicsPipeline();
 
-  // Creation of custom input objects into the graphics pipeline
-  // std::vector<Utils::Vertex> vertices = {
-  //     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-  //     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-  //     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-  //     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
-
-  //     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-  //     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-  //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
-  //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}};
-
-  //Direction of coordinates
-  // (-1,-1)   -1   (1, -1)
-  //  
-  // -1         0         1
-  //
-  // (-1, 1)    1    (1, 1)
-
-  // std::vector<Utils::Vertex> vertices = {{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, //top left
-  //                                        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  //top right
-  //                                        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},    //bottom right
-  //                                        {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}};  //bottom left
-
-  /*
-  std::vector<Utils::Vertex> vertices = {
-                                         {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, 
-                                         {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  
-                                         {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
-                                         {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-
-                                         {{-0.5f, -0.5f, -0.2f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, 
-                                         {{0.5f, -0.5f, -0.2f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  
-                                         {{0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  
-                                         {{-0.5f, 0.5f, -0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
-                                         };  //bottom left
-  */
-
-                                         
-  //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
-  //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
-  //p0 = {v0, v1, v2}
-
-  //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
-  //p1 = {v1, v3, v2}
-  
-  // createVertexBuffer(mVertices);
-  
-  //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-  /*
-  mIndices = {0, 1, 2, 2, 3, 0,
-              4, 5, 6, 6, 7, 4};
-              */
-
-  // mIndices = {0, 1, 2, 2, 3, 0};
-
-  //VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP for generating two triangles
-  // mIndices = {0, 1, 3, 2};
-  //The two primitives created by {0, 1, 2, 3} is as follows:
-  //pi = {vi, vi+(1+i%2), vi+(2-i%2)}
-  //p0 = {v0, v(0 + (1 + 0 % 2), v(0 + (2 - 0 % 2))}
-  //p0 = {v0, v1, v2} == {0, 1, 2}
-
-  //p1 = {v1, v(1 + (1 + 1 % 2)), v(1 + (2 - 1 % 2))}
-  //p1 = {v1, v3, v2} == {1, 3, 2}
-
-  //So plugging this {0, 1, 3, 2} give the correct two clockwise triangles
-  //p0 = {v0, v1, v2} == {0, 1, 3}
-  //p1 = {v1, v3, v2} == {1, 2, 3}
-
-  // glm::vec3 p0 = {-0.5f, -0.5f, 0.0f};
-  // glm::vec3 p1 = {0.5f, -0.5f, 0.0f};
-  // glm::vec3 p2 = {0.5f, 0.5f, 0.0f};
-  // glm::vec3 p3 = {-0.5f, 0.5f, 0.0f};
-
-  // VulkanHelper::calculateTriangleFaceDirection(p0, p1, p3); 
-  // VulkanHelper::calculateTriangleFaceDirection(p1, p2, p3); 
-
-  // createIndexBuffer(mIndices);
-
   createUniformBuffers();
   createDescriptorPool(1);
-  createDescriptorSets();
+
+  //createDescriptorSets();
+  createDescriptorSetsModel();
 
   buildDrawingCommandBuffers();
 
@@ -842,14 +764,16 @@ void VulkanRenderer::createUniformBuffers() {
                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                         &mUBOScene, &mUBOSceneMemory);
 
+}
+
+void VulkanRenderer::createUniformBufferForModel(VkBuffer *modelBuffer, VkDeviceMemory *modelMemory) {
   VkDeviceSize bufferSizeModel = sizeof(Utils::UniformBufferObjectModel);
 
   VulkanHelper::createBuffer(mPhysicalDevice, mLogicalDevice, bufferSizeModel,
                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        &mUBOModel, &mUBOModelMemory);
- 
+                        modelBuffer, modelMemory);                                              
 }
 
 void VulkanRenderer::loadTextures() {
@@ -945,7 +869,7 @@ void VulkanRenderer::createDescriptorSets()
 
   for (size_t i = 0; i < mTextures.size(); i++) {
     VkDescriptorBufferInfo matrix_buffer_descriptor = VulkanInit::create_descriptor_buffer(mUBOScene, sizeof(Utils::UniformBufferObject), 0);
-    VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mUBOModel, sizeof(Utils::UniformBufferObjectModel), 0);
+    VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mModels[0].mUniformBuffer, sizeof(Utils::UniformBufferObjectModel), 0);
     VkDescriptorImageInfo environment_image_descriptor = VulkanInit::create_descriptor_texture(mTextures[i]);
     std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
           VulkanInit::write_descriptor_set_from_buffer(mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
@@ -961,15 +885,54 @@ void VulkanRenderer::createDescriptorSets()
   }
 }
 
+void VulkanRenderer::createDescriptorSetsModel()
+{
+
+  std::vector<VkDescriptorSet> descriptorSets;
+
+  descriptorSets.resize(mModels.size());
+
+  std::vector<VkDescriptorSetLayout> layoutsArray;
+
+  for (size_t i = 0; i < mModels.size(); i++) {
+    layoutsArray.push_back(mDescriptorSetLayout);
+  }
+  VkDescriptorSetAllocateInfo alloc_info = VulkanInit::descriptor_set_allocate_info(
+	      mDescriptorPool,
+	      layoutsArray.data(),
+        static_cast<uint32_t>(mModels.size()));
+
+	VK_CHECK(vkAllocateDescriptorSets(mLogicalDevice, &alloc_info, descriptorSets.data()), "vkAllocateDescriptorSets");
+   
+  for (size_t i = 0; i < mModels.size(); i++) {
+     VkDescriptorBufferInfo matrix_buffer_descriptor = VulkanInit::create_descriptor_buffer(mUBOScene, sizeof(Utils::UniformBufferObject), 0);
+     VkDescriptorBufferInfo matrix_buffer_descriptor_model = VulkanInit::create_descriptor_buffer(mModels[i].mUniformBuffer, sizeof(Utils::UniformBufferObjectModel), 0);
+     VkDescriptorImageInfo environment_image_descriptor = VulkanInit::create_descriptor_texture(mTextures[0]);
+
+     std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
+          VulkanInit::write_descriptor_set_from_buffer(descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+          VulkanInit::write_descriptor_set_from_buffer(descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &matrix_buffer_descriptor_model),
+          VulkanInit::write_descriptor_set_from_image(descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &environment_image_descriptor)
+      };
+
+    mTextures[0].descriptor_set_index = 0;
+
+    vkUpdateDescriptorSets(mLogicalDevice, static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr); 
+
+    mModels[i].mDescriptorSet = descriptorSets[i];
+  }
+}
+
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
-  Utils::UniformBufferObjectModel uboModel{};
-  //uboModel.modelPos = glm::mat4(1.0f);
-  uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
-  void *dataModel; 
-  vkMapMemory(mLogicalDevice, mUBOModelMemory, 0, sizeof(uboModel), 0, &dataModel); 
-  memcpy(dataModel, &uboModel, sizeof(uboModel)); 
-  vkUnmapMemory(mLogicalDevice, mUBOModelMemory);  
+  for (size_t i = 0; i < mModels.size(); i++) {
+    Utils::UniformBufferObjectModel uboModel{};
+    uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
+    void *dataModel; 
+    vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
+    memcpy(dataModel, &uboModel, sizeof(uboModel)); 
+    vkUnmapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory);  
+  }
 
   Utils::UniformBufferObject ubo{};
 
@@ -1131,11 +1094,10 @@ void VulkanRenderer::drawFromDescriptors(VkCommandBuffer commandBuffer,
 
   vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
   
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          mPipelineLayout, 0, 1,
-                          &mDescriptorSets[mTextures[0].descriptor_set_index], 0,
-                          nullptr);
- 
+  //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mTextures[0].descriptor_set_index], 0, nullptr);
+  
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mModels[0].mDescriptorSet, 0, nullptr);
+   
   vkCmdDrawIndexed(commandBuffer, (uint32_t)indices.size(), 1, 0, 0, 0);
 
 }
