@@ -352,13 +352,16 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     // For multiple objects, add more calls to drawFromDescriptors
     //drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices, mIndices, mVertexBuffer, mIndexBuffer);
 
-    drawFromDescriptors(mDrawingCommandBuffers[i], 
-                        mGraphicsPipeline, 
-                        mModels[0].mVertices, 
-                        mModels[0].mIndices, 
-                        mModels[0].mVertexBuffer, 
-                        mModels[0].mIndexBuffer,
-                        mModels[0].mDescriptorSet);
+    for(int k = 0; k < mModels.size(); k++) {
+
+      drawFromDescriptors(mDrawingCommandBuffers[i], 
+                          mGraphicsPipeline, 
+                          mModels[k].mVertices, 
+                          mModels[k].mIndices, 
+                          mModels[k].mVertexBuffer, 
+                          mModels[k].mIndexBuffer,
+                          mModels[k].mDescriptorSet);
+    }
 
     vkCmdEndRendering(mDrawingCommandBuffers[i]);
 
@@ -928,7 +931,10 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
   for (size_t i = 0; i < mModels.size(); i++) {
     Utils::UniformBufferObjectModel uboModel{};
-    uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
+    uboModel.modelPos = glm::mat4(1.0f);
+    if(i == 0) {
+     uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
+    }
     void *dataModel; 
     vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
     memcpy(dataModel, &uboModel, sizeof(uboModel)); 
