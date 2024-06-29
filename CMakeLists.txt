@@ -44,8 +44,14 @@ ENDIF(WIN32)
 
 include_directories(${Vulkan_INCLUDE_DIR})
 
+message("Vulkan_INCLUDE_DIR: ${Vulkan_INCLUDE_DIR}")
+
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
+
+message("SDL2_INCLUDE_DIRS: ${SDL2_INCLUDE_DIRS}")
+
+#/Users/bora/VulkanSDK/1.3.283.0/iOS/include
 
 message("Project Build Dir: ${PROJECT_BINARY_DIR}")
 file(COPY "${PROJECT_SOURCE_DIR}/textures" DESTINATION "${PROJECT_BINARY_DIR}")
@@ -73,6 +79,7 @@ if(WIN32)
         "src/gltf_loader.cpp"
         "src/main.cpp")
 ELSEIF(UNIX)
+    include_directories("/Users/bora/VulkanSDK/1.3.283.0/iOS/include")
     add_executable (VKGame
         "src/game.cpp"
         "src/vulkan_renderer.cpp"
