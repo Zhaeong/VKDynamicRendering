@@ -929,17 +929,17 @@ void VulkanRenderer::createDescriptorSetsModel()
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
-  for (size_t i = 0; i < mModels.size(); i++) {
-    Utils::UniformBufferObjectModel uboModel{};
-    uboModel.modelPos = glm::mat4(1.0f);
-    if(i == 0) {
-     uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
-    }
-    void *dataModel; 
-    vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
-    memcpy(dataModel, &uboModel, sizeof(uboModel)); 
-    vkUnmapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory);  
-  }
+  //for (size_t i = 0; i < mModels.size(); i++) {
+  //  Utils::UniformBufferObjectModel uboModel{};
+  //  uboModel.modelPos = glm::mat4(1.0f);
+  //  if(i == 0) {
+  //   uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
+  //  }
+  //  void *dataModel; 
+  //  vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
+  //  memcpy(dataModel, &uboModel, sizeof(uboModel)); 
+  //  vkUnmapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory);  
+  //}
 
   Utils::UniformBufferObject ubo{};
 
@@ -992,7 +992,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 
   glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(mLightRot),  glm::vec3(0.0f, 1.0f, 0.0f));
 
-  glm::vec4 originalPos = glm::vec4(5.0f, 5.0f, 5.0f, 1.0f);
+  glm::vec4 originalPos = glm::vec4(3.0f, 3.0f, 3.0f, 1.0f);
 
   ubo.light = originalPos * rot_mat;
 
@@ -1005,6 +1005,20 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   void *data; vkMapMemory(mLogicalDevice, mUBOSceneMemory, 0, sizeof(ubo), 0, &data); 
   memcpy(data, &ubo, sizeof(ubo)); 
   vkUnmapMemory(mLogicalDevice, mUBOSceneMemory);
+  for (size_t i = 0; i < mModels.size(); i++) {
+    Utils::UniformBufferObjectModel uboModel{};
+    uboModel.modelPos = glm::mat4(1.0f);
+    if(i == 0) {
+     //uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
+     uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(ubo.light));
+    }
+    void *dataModel; 
+    vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
+    memcpy(dataModel, &uboModel, sizeof(uboModel)); 
+    vkUnmapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory);  
+  }
+
+
 }
 
 void VulkanRenderer::cleanupSwapChain() {

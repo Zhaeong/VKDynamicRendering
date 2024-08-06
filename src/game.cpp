@@ -23,17 +23,17 @@ Game::Game() {
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
   for(int i = 0; i < 2; i++){
-  Utils::Model cubeModel;
+      Utils::Model cubeModel;
 
-  cubeModel.mVertices = mGLTFLoader->mVertices;
-  cubeModel.mIndices = mGLTFLoader->mIndices;
+      cubeModel.mVertices = mGLTFLoader->mVertices;
+      cubeModel.mIndices = mGLTFLoader->mIndices;
 
-  mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
-  mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
-  mVulkanRenderer->createUniformBufferForModel(&cubeModel.mUniformBuffer, &cubeModel.mUniformBuffersMemory);
+      mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
+      mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
+      mVulkanRenderer->createUniformBufferForModel(&cubeModel.mUniformBuffer, &cubeModel.mUniformBuffersMemory);
 
-  // push back create copy
-  mVulkanRenderer->mModels.push_back(cubeModel);
+      // push back create copy
+      mVulkanRenderer->mModels.push_back(cubeModel);
   }
   
   mVulkanRenderer->beginVulkanObjectCreation();
