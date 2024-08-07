@@ -25,6 +25,8 @@ Game::Game() {
   for(int i = 0; i < 2; i++){
       Utils::Model cubeModel;
 
+      cubeModel.mPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+
       cubeModel.mVertices = mGLTFLoader->mVertices;
       cubeModel.mIndices = mGLTFLoader->mIndices;
 
@@ -193,11 +195,13 @@ std::string Game::getEvent() {
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
+        mVulkanRenderer->mModels[1].mPosition.x +=0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
+        mVulkanRenderer->mModels[1].mPosition.x -=0.1f;
         break;
       }
       default:

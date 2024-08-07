@@ -118,6 +118,8 @@ struct Model{
   VkDeviceMemory mUniformBuffersMemory = VK_NULL_HANDLE;
 
   VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
+
+  glm::vec3 mPosition;
 };
 
 inline void showWindowFlags(int flags) {

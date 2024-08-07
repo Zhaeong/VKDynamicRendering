@@ -929,18 +929,6 @@ void VulkanRenderer::createDescriptorSetsModel()
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   
-  //for (size_t i = 0; i < mModels.size(); i++) {
-  //  Utils::UniformBufferObjectModel uboModel{};
-  //  uboModel.modelPos = glm::mat4(1.0f);
-  //  if(i == 0) {
-  //   uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
-  //  }
-  //  void *dataModel; 
-  //  vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
-  //  memcpy(dataModel, &uboModel, sizeof(uboModel)); 
-  //  vkUnmapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory);  
-  //}
-
   Utils::UniformBufferObject ubo{};
 
   //The position of the model in world space
@@ -1007,7 +995,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   vkUnmapMemory(mLogicalDevice, mUBOSceneMemory);
   for (size_t i = 0; i < mModels.size(); i++) {
     Utils::UniformBufferObjectModel uboModel{};
-    uboModel.modelPos = glm::mat4(1.0f);
+    uboModel.modelPos = glm::translate(glm::mat4(1.0f), mModels[i].mPosition);
     if(i == 0) {
      //uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
      uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(ubo.light));
