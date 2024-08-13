@@ -17,8 +17,6 @@ Game::Game() {
 
   mVulkanRenderer->mCameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
 
-  mVulkanRenderer->mViewMatrix = calculateViewMatrixQuat(mVulkanRenderer->mCameraPos);
-
   // instantiate to identiy matrix
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
@@ -60,6 +58,8 @@ void Game::run() {
     //                                                 mVulkanRenderer->mCameraPos + mVulkanRenderer->mCameraFront,
     //                                                 mVulkanRenderer->mCameraUp);
 
+
+    // Put into uniform buffer and view matrix to transform model coordinates in world space into camera space
     mVulkanRenderer->mViewMatrix = calculateViewMatrixQuat(mVulkanRenderer->mCameraPos);
 
 
