@@ -7,9 +7,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gltf_loader.hpp>
 #include <vulkan_renderer.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 namespace GameEngine {
 
@@ -44,8 +41,5 @@ public:
   void run();
 
   std::string getEvent();
-  void updateRotation();
-  glm::mat4 calculateViewMatrix(glm::vec3 position, glm::vec3 target, glm::vec3 worldUp);
-  glm::mat4 calculateViewMatrixQuat(glm::vec3 position); 
 };
 } // namespace GameEngine

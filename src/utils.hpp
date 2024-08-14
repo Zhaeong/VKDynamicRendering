@@ -4,7 +4,9 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <SDL2/SDL.h>
-
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an
 /// error.
@@ -155,4 +157,71 @@ inline void showWindowFlags(int flags) {
   printf("=======================\n");
 }
 
+inline void updateRotation(float pitch, float yaw){
+  float cosYaw = cos(glm::radians(yaw));
+  float sinYaw = sin(glm::radians(yaw));
+
+  float cosPitch = cos(glm::radians(pitch));
+  float sinPitch = sin(glm::radians(pitch));
+
+  glm::vec3 rotation = glm::vec3(0.0f);
+
+  rotation.x = cosYaw * cosPitch;
+  rotation.y = sinPitch;
+  rotation.z = sinYaw * cosPitch;
+
+  rotation = glm::normalize(rotation);
+  //mVulkanRenderer->mCameraFront = rotation;
+
+}
+
+inline glm::mat4 calculateViewMatrix(glm::vec3 position, glm::vec3 target, glm::vec3 worldUp){
+// 1. Position = known
+    // 2. Calculate cameraDirection
+    glm::vec3 zaxis = glm::normalize(position - target);
+    // 3. Get positive right axis vector
+    glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(worldUp), zaxis));
+    // 4. Calculate camera up vector
+    glm::vec3 yaxis = glm::cross(zaxis, xaxis);
+
+    // Create translation and rotation matrix
+    // In glm we access elements as mat[col][row] due to column-major layout
+    glm::mat4 translation = glm::mat4(1.0f); // Identity matrix by default
+    translation[3][0] = -position.x; // Third column, first row
+    translation[3][1] = -position.y;
+    translation[3][2] = -position.z;
+    glm::mat4 rotation = glm::mat4(1.0f);
+    rotation[0][0] = xaxis.x; // First column, first row
+    rotation[1][0] = xaxis.y;
+    rotation[2][0] = xaxis.z;
+    rotation[0][1] = yaxis.x; // First column, second row
+    rotation[1][1] = yaxis.y;
+    rotation[2][1] = yaxis.z;
+    rotation[0][2] = zaxis.x; // First column, third row
+    rotation[1][2] = zaxis.y;
+    rotation[2][2] = zaxis.z; 
+
+    // Return lookAt matrix as combination of translation and rotation matrix
+    return rotation * translation; // Remember to read from right to left (first translation then rotation)
+}
+
+inline glm::mat4 calculateViewMatrixQuat(glm::vec3 position, float pitch, float yaw) {
+  //FPS camera:  RotationX(pitch) * RotationY(yaw)
+  glm::quat qPitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1, 0, 0));
+  glm::quat qYaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0, 1, 0));
+  //glm::quat qRoll = glm::angleAxis(mRoll ,glm::vec3(0,0,1));  
+
+  //For a FPS camera we can omit roll
+  glm::quat orientation = qPitch * qYaw;
+  orientation = glm::normalize(orientation);
+  //glm::mat4 rotate = glm::mat4_cast(orientation);
+  glm::mat cameraRotation = glm::mat4_cast(orientation);
+
+  glm::mat4 translation = glm::mat4(1.0f); // Identity matrix by default
+  translation[3][0] = -position.x; // Third column, first row
+  translation[3][1] = -position.y;
+  translation[3][2] = -position.z;
+
+  return cameraRotation * translation;
+}
 } // namespace Utils
