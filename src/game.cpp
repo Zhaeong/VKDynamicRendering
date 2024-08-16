@@ -20,21 +20,15 @@ Game::Game() {
   // instantiate to identiy matrix
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
-  for(int i = 0; i < 2; i++){
-      Utils::Model cubeModel;
-
-      cubeModel.mPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-
-      cubeModel.mVertices = mGLTFLoader->mVertices;
-      cubeModel.mIndices = mGLTFLoader->mIndices;
-
-      mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
-      mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
-      mVulkanRenderer->createUniformBufferForModel(&cubeModel.mUniformBuffer, &cubeModel.mUniformBuffersMemory);
-
-      // push back create copy
-      mVulkanRenderer->mModels.push_back(cubeModel);
-  }
+  Utils::Model lightModel = loadModel(glm::vec3(0.0f, 0.0f, 0.0f),
+                             mGLTFLoader->mVertices, 
+                             mGLTFLoader->mIndices); 
+  mVulkanRenderer->mModels.push_back(lightModel);
+  
+  Utils::Model cubeModel = loadModel(glm::vec3(0.0f, 0.0f, 0.0f),
+                             mGLTFLoader->mVertices, 
+                             mGLTFLoader->mIndices); 
+  mVulkanRenderer->mModels.push_back(cubeModel);
   
   mVulkanRenderer->beginVulkanObjectCreation();
 
@@ -260,6 +254,25 @@ std::string Game::getEvent() {
   // std::cout << "Event: " << eventName << "\n";
 
   return eventName;
+}
+
+Utils::Model Game::loadModel(glm::vec3                  position,
+                             std::vector<Utils::Vertex> vertices, 
+                             std::vector<uint32_t>      indices) {
+
+    Utils::Model cubeModel;
+
+    cubeModel.mPosition = position;
+
+    cubeModel.mVertices = vertices;
+    cubeModel.mIndices = indices;
+
+    mVulkanRenderer->createVertexBuffer(cubeModel.mVertices, &cubeModel.mVertexBuffer, &cubeModel.mVertexBufferMemory);
+    mVulkanRenderer->createIndexBuffer(cubeModel.mIndices, &cubeModel.mIndexBuffer, &cubeModel.mIndexBufferMemory);
+    mVulkanRenderer->createUniformBufferForModel(&cubeModel.mUniformBuffer, &cubeModel.mUniformBuffersMemory);
+
+    return cubeModel;
+ 
 }
 
 } // namespace GameEngine

@@ -41,5 +41,9 @@ public:
   void run();
 
   std::string getEvent();
+  Utils::Model loadModel(glm::vec3                  position,
+                         std::vector<Utils::Vertex> vertices, 
+                         std::vector<uint32_t>      indices); 
+ 
 };
 } // namespace GameEngine
