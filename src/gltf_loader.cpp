@@ -11,6 +11,13 @@ namespace GLTF {
 
 GLTFLoader::GLTFLoader(){
   std::cout << "Started GLTFLoader\n";
+}
+
+void GLTFLoader::loadFile(std::string filePath) {
+
+  mVertices.clear();
+  mIndices.clear();
+
   tinygltf::Model model;
   tinygltf::TinyGLTF loader;
 
@@ -19,9 +26,7 @@ GLTFLoader::GLTFLoader(){
 
   std::filesystem::path p = std::filesystem::current_path();
 
-  //bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/box/Box.gltf"));
-  bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/cube/cube.gltf"));
-  //bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + "/models/teststuff/teststuff.gltf"));
+  bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (p.generic_string() + filePath));
 
   if (!warn.empty()) {
     printf("Warn: %s\n", warn.c_str());

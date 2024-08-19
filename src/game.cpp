@@ -8,6 +8,8 @@ Game::Game() {
   }
 
   mGLTFLoader = new GLTF::GLTFLoader();
+
+
   mWindow = SDL_CreateWindow("SDL Vulkan Sample", SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, GameEngine::WIDTH,
                             GameEngine::HEIGHT,
@@ -20,11 +22,13 @@ Game::Game() {
   // instantiate to identiy matrix
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
+  mGLTFLoader->loadFile("/models/sphere/sphere.gltf");
   Utils::Model lightModel = loadModel(glm::vec3(0.0f, 0.0f, 0.0f),
                              mGLTFLoader->mVertices, 
                              mGLTFLoader->mIndices); 
   mVulkanRenderer->mModels.push_back(lightModel);
   
+  mGLTFLoader->loadFile("/models/cube/cube.gltf");
   Utils::Model cubeModel = loadModel(glm::vec3(0.0f, 0.0f, 0.0f),
                              mGLTFLoader->mVertices, 
                              mGLTFLoader->mIndices); 
@@ -46,12 +50,6 @@ void Game::run() {
 
   while (isRunning) {
     std::string event = getEvent();
-    //updateRotation();
-
-    //mVulkanRenderer->mViewMatrix = calculateViewMatrix(mVulkanRenderer->mCameraPos,
-    //                                                 mVulkanRenderer->mCameraPos + mVulkanRenderer->mCameraFront,
-    //                                                 mVulkanRenderer->mCameraUp);
-
 
     // Put into uniform buffer and view matrix to transform model coordinates in world space into camera space
     mVulkanRenderer->mViewMatrix = Utils::calculateViewMatrixQuat(mVulkanRenderer->mCameraPos, mPitch, mYaw);

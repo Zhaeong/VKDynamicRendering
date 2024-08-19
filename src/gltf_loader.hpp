@@ -13,6 +13,7 @@ struct GLTFLoader {
   GLTFLoader();
   ~GLTFLoader();
 
+  void loadFile(std::string filePath);
   void loadNode(tinygltf::Node node, tinygltf::Model model);
 
 };

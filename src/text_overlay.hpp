@@ -28,22 +28,22 @@ class TextOverlay {
         VkDeviceMemory mVertexBufferMemory;
 
         //Vulkan Image
-	    VkImage mImage;
+	      VkImage mImage;
         VkDeviceMemory mImageMemory;
-	    VkImageView mImageView;
+	      VkImageView mImageView;
         VkSampler mSampler;
 
         VkDescriptorPool mDescriptorPool;
-	    VkDescriptorSetLayout mDescriptorSetLayout;
-	    VkDescriptorSet mDescriptorSet;
+	      VkDescriptorSetLayout mDescriptorSetLayout;
+	      VkDescriptorSet mDescriptorSet;
 
         VkPipelineLayout mPipelineLayout;
-	    VkPipelineCache mPipelineCache;
-	    VkPipeline mPipeline;
+	      VkPipelineCache mPipelineCache;
+	      VkPipeline mPipeline;
 
         // Pointer to mapped vertex buffer
         // Pointer to mapped vertex buffer
-	    glm::vec4 *mMappedVertexBufferMemory = nullptr;
+	      glm::vec4 *mMappedVertexBufferMemory = nullptr;
         uint32_t mNumLetters;
         float mScale = 1.0f;
 
