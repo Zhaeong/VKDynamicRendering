@@ -5,7 +5,7 @@
 layout(binding = 0) uniform UniformBufferObject {
     mat4 view;
     mat4 proj;
-    vec4 light;
+    vec3 light;
     vec3 camerPos;
 } ubo;
 
@@ -43,7 +43,7 @@ void main() {
 
     outCameraView = outFragPos - ubo.camerPos;
     
-    //debugPrintfEXT("Light pos is %v4f", ubo.light);
+    //debugPrintfEXT("Light pos is %v3f", ubo.light);
     //debugPrintfEXT("pos is %v4f", gl_Position);
 
 }

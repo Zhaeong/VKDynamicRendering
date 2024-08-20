@@ -105,8 +105,6 @@ public:
   glm::mat4 mCameraRotation;
 
   glm::mat4 mViewMatrix;
-
-  float mLightRot = 0.0f;
   //===================================================
   // Functions
   VulkanRenderer(SDL_Window *sdlWindow);

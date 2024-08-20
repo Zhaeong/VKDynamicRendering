@@ -25,12 +25,10 @@ VulkanRenderer::~VulkanRenderer() {
 
     vkDestroyBuffer(mLogicalDevice, mModels[i].mIndexBuffer, nullptr);
     vkFreeMemory(mLogicalDevice, mModels[i].mIndexBufferMemory, nullptr);
-  }
 
-  //for (size_t i = 0; i < mUniformBuffers.size(); i++) {
-  //  vkDestroyBuffer(mLogicalDevice, mUniformBuffers[i], nullptr);
-  //  vkFreeMemory(mLogicalDevice, mUniformBuffersMemory[i], nullptr);
-  //}
+    vkDestroyBuffer(mLogicalDevice, mModels[i].mUniformBuffer, nullptr);
+    vkFreeMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, nullptr);
+  }
 
   for (auto imageView : mSwapChainImageViews) {
     vkDestroyImageView(mLogicalDevice, imageView, nullptr);
@@ -964,7 +962,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     glm::radians(45.0f), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
     mSwapChainExtent.width / (float)mSwapChainExtent.height, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960
     0.1f, // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-    10.0f); // Far clipping plane. Keep as little as possible.
+    20.0f); // Far clipping plane. Keep as little as possible.
 
   // Or, for an ortho camera :
   /*
@@ -976,19 +974,10 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
                          5.0f); // far
   */
 
-  //Rotate the light by the y axis by degrees
-
-  glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(mLightRot),  glm::vec3(0.0f, 1.0f, 0.0f));
-
-  glm::vec4 originalPos = glm::vec4(3.0f, 3.0f, 3.0f, 1.0f);
-
-  ubo.light = originalPos * rot_mat;
+  // First model is the light
+  ubo.light = mModels[0].mPosition;
 
   ubo.camPos = mCameraPos;
-  
-  // std::cout << mLightRot << "\n";
-  // std::cout << glm::to_string(rot_mat) << "\n";
-  // std::cout << glm::to_string(ubo.light) << "\n";
 
   void *data; vkMapMemory(mLogicalDevice, mUBOSceneMemory, 0, sizeof(ubo), 0, &data); 
   memcpy(data, &ubo, sizeof(ubo)); 
@@ -996,10 +985,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
   for (size_t i = 0; i < mModels.size(); i++) {
     Utils::UniformBufferObjectModel uboModel{};
     uboModel.modelPos = glm::translate(glm::mat4(1.0f), mModels[i].mPosition);
-    if(i == 0) {
-     //uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f));
-     uboModel.modelPos = glm::translate(glm::mat4(1.0f), glm::vec3(ubo.light));
-    }
+
     void *dataModel; 
     vkMapMemory(mLogicalDevice, mModels[i].mUniformBuffersMemory, 0, sizeof(uboModel), 0, &dataModel); 
     memcpy(dataModel, &uboModel, sizeof(uboModel)); 

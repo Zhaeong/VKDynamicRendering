@@ -23,7 +23,7 @@ Game::Game() {
   mVulkanRenderer->mCameraRotation = glm::mat4(1.0);
 
   mGLTFLoader->loadFile("/models/sphere/sphere.gltf");
-  Utils::Model lightModel = loadModel(glm::vec3(0.0f, 0.0f, 0.0f),
+  Utils::Model lightModel = loadModel(glm::vec3(3.0f, 3.0f, 3.0f),
                              mGLTFLoader->mVertices, 
                              mGLTFLoader->mIndices); 
   mVulkanRenderer->mModels.push_back(lightModel);
@@ -120,9 +120,12 @@ std::string Game::getEvent() {
       case SDLK_e: {
         eventName = "KEY_E";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mLightRot+=1;
 
-        //mRoll += mLookSpeed * mDeltaTime;
+        // rotate the light model about the y axis
+        glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(10.0f),  glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 originalPos = mVulkanRenderer->mModels[0].mPosition;
+        mVulkanRenderer->mModels[0].mPosition = glm::vec4(originalPos.x, originalPos.y, originalPos.z, 1.0f) * rot_mat;
+
         break;
       }
       case SDLK_q: {
