@@ -813,7 +813,7 @@ void VulkanRenderer::createDescriptorPool(int number) {
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = static_cast<uint32_t>(mTextures.size());
+  poolInfo.maxSets = static_cast<uint32_t>(mModels.size());
 
   if (vkCreateDescriptorPool(mLogicalDevice, &poolInfo, nullptr, &mDescriptorPool) !=
       VK_SUCCESS) {
@@ -843,6 +843,7 @@ void VulkanRenderer::setupDescriptorSetLayout()
 	VK_CHECK(vkCreatePipelineLayout(mLogicalDevice, &pipeline_layout_create_info, nullptr, &mPipelineLayout), "vkCreatePipelineLayout");
 }
 
+// Note, not used when loading models
 void VulkanRenderer::createDescriptorSets()
 {
   //Create a descriptor set per image
