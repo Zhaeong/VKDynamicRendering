@@ -26,6 +26,7 @@ Game::Game() {
   Utils::Model lightModel = loadModel(glm::vec3(3.0f, 3.0f, 3.0f),
                              mGLTFLoader->mVertices, 
                              mGLTFLoader->mIndices); 
+
   mVulkanRenderer->mModels.push_back(lightModel);
   
   mGLTFLoader->loadFile("/models/cube/cube.gltf");
@@ -33,6 +34,11 @@ Game::Game() {
                              mGLTFLoader->mVertices, 
                              mGLTFLoader->mIndices); 
   mVulkanRenderer->mModels.push_back(cubeModel);
+
+  Utils::Model secondCube = loadModel(glm::vec3(1.0f, 0.0f, 0.0f),
+                             mGLTFLoader->mVertices, 
+                             mGLTFLoader->mIndices);
+  mVulkanRenderer->mModels.push_back(secondCube);
   
   mVulkanRenderer->beginVulkanObjectCreation();
 
@@ -180,7 +186,6 @@ std::string Game::getEvent() {
       }
       case SDLK_d: {
         eventName = "KEY_D";
-        std::cout << "Event: " << eventName << "\n";
         glm::vec3 cameraRight = glm::vec3(mVulkanRenderer->mViewMatrix[0][0],
                                           mVulkanRenderer->mViewMatrix[1][0],
                                           mVulkanRenderer->mViewMatrix[2][0]);
@@ -190,13 +195,19 @@ std::string Game::getEvent() {
       case SDLK_z: {
         eventName = "KEY_z";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mModels[1].mPosition.x +=0.1f;
+        mVulkanRenderer->mModels[0].mPosition.y +=0.1f;
+        break;
+      }
+      case SDLK_c: {
+        eventName = "KEY_c";
+        std::cout << "Event: " << eventName << "\n";
+        mVulkanRenderer->mModels[2].mPosition.y +=0.1f;
         break;
       }
       case SDLK_x: {
         eventName = "KEY_x";
         std::cout << "Event: " << eventName << "\n";
-        mVulkanRenderer->mModels[1].mPosition.x -=0.1f;
+        mVulkanRenderer->mModels[0].mPosition.y -=0.1f;
         break;
       }
       default:

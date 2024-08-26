@@ -782,23 +782,17 @@ void VulkanRenderer::loadTextures() {
 
   std::filesystem::path p = std::filesystem::current_path();
 
-  Utils::Texture firstTexture = VulkanHelper::loadTexture((p.generic_string() + "/textures/amdtexture.jpg").c_str(),
+  // load a texture per model
+  for(int i = 0; i < mModels.size(); i++) {
+  
+    Utils::Texture firstTexture = VulkanHelper::loadTexture((p.generic_string() + "/textures/amdtexture.jpg").c_str(),
                                                           VK_FORMAT_R8G8B8A8_SRGB,
                                                           mPhysicalDevice,
                                                           mLogicalDevice,
                                                           mCommandPool,
                                                           mGraphicsQueue);
-  mTextures.push_back(firstTexture);
-
-  Utils::Texture secondTexture = VulkanHelper::loadTexture((p.generic_string() + "/textures/amdtexture2.jpg").c_str(),
-                                                          VK_FORMAT_R8G8B8A8_SRGB,
-                                                          mPhysicalDevice,
-                                                          mLogicalDevice,
-                                                          mCommandPool,
-                                                          mGraphicsQueue);
-  mTextures.push_back(secondTexture);
-
-
+    mTextures.push_back(firstTexture);
+  }
 }
 
 void VulkanRenderer::createDescriptorPool(int number) {

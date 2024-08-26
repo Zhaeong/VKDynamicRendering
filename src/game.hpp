@@ -19,7 +19,7 @@ public:
 
   std::chrono::time_point<std::chrono::high_resolution_clock> mLastTimestamp;
   float mDeltaTime;
-  float mMoveSpeed = 0.1f;
+  float mMoveSpeed = 0.5f;
   float mLookSpeed = 5.0f;
   // These are chosen to match the default rotation == (0, 0, -1)
   float mYaw = 0.0f; // because cos(0) == 1, we don't want positive z direction, we want sin(-90) == -1 so rotation.z == -1
