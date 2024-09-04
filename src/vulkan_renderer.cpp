@@ -162,7 +162,20 @@ void VulkanRenderer::pickPhysicalDevice() {
     std::cout << "Picked " << deviceProperties.deviceName
               << " Vendor: " << deviceProperties.vendorID << "\n";
 
+    VkSampleCountFlags sampleCounts = deviceProperties.limits.framebufferColorSampleCounts &
+                                      deviceProperties.limits.framebufferDepthSampleCounts;
+
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    if ( sampleCounts & VK_SAMPLE_COUNT_64_BIT) { msaaSamples = VK_SAMPLE_COUNT_64_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_32_BIT) { msaaSamples = VK_SAMPLE_COUNT_32_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_16_BIT) { msaaSamples = VK_SAMPLE_COUNT_16_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_8_BIT)  { msaaSamples = VK_SAMPLE_COUNT_8_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_4_BIT)  { msaaSamples = VK_SAMPLE_COUNT_4_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_2_BIT)  { msaaSamples = VK_SAMPLE_COUNT_2_BIT; }
+
     std::cout << "Max bound descriptorSets: " <<  deviceProperties.limits.maxBoundDescriptorSets << "\n";
+    std::cout << "sampleCounts: " <<  sampleCounts << "\n";
+    std::cout << "msaaCounts: " <<  msaaSamples << "\n";
   }
 }
 
