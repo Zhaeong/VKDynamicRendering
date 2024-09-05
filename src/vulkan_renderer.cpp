@@ -1,3 +1,5 @@
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <vulkan_renderer.hpp>
 
 namespace VulkanEngine {
@@ -174,6 +176,7 @@ void VulkanRenderer::pickPhysicalDevice() {
     else if ( sampleCounts & VK_SAMPLE_COUNT_4_BIT)  { mMsaaSamples = VK_SAMPLE_COUNT_4_BIT; }
     else if ( sampleCounts & VK_SAMPLE_COUNT_2_BIT)  { mMsaaSamples = VK_SAMPLE_COUNT_2_BIT; }
     
+    //mMsaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
     std::cout << "Max bound descriptorSets: " <<  deviceProperties.limits.maxBoundDescriptorSets << "\n";
     std::cout << "sampleCounts: " <<  sampleCounts << "\n";
@@ -239,8 +242,22 @@ void VulkanRenderer::createLogicalDevice() {
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
   dynamic_rendering_feature.dynamicRendering = VK_TRUE;
 
-  createInfo.pNext = &dynamic_rendering_feature;
 
+VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state3_features{};
+extended_dynamic_state3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+extended_dynamic_state3_features.extendedDynamicState3RasterizationSamples = true;
+extended_dynamic_state3_features.extendedDynamicState3PolygonMode = true;
+extended_dynamic_state3_features.extendedDynamicState3AlphaToCoverageEnable = true;
+extended_dynamic_state3_features.extendedDynamicState3SampleMask = true;
+extended_dynamic_state3_features.extendedDynamicState3ColorBlendEnable = true;
+extended_dynamic_state3_features.extendedDynamicState3ColorBlendEquation = true;
+extended_dynamic_state3_features.extendedDynamicState3LogicOpEnable = true;
+extended_dynamic_state3_features.extendedDynamicState3ColorWriteMask = true;
+
+
+dynamic_rendering_feature.pNext = &extended_dynamic_state3_features;
+
+  createInfo.pNext = &dynamic_rendering_feature;
   VK_CHECK(vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mLogicalDevice), "vkCreateDevice");
 
   vkGetDeviceQueue(mLogicalDevice, mQueueFamilyIndices.graphicsFamily, 0, &mGraphicsQueue);
@@ -331,6 +348,19 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     renderingColorAttachmentInfo.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
     renderingColorAttachmentInfo.resolveImageView = mSwapChainImageViews[i];
     renderingColorAttachmentInfo.resolveImageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+    /*
+    VkRenderingAttachmentInfoKHR renderingColorAttachmentInfo{};
+    renderingColorAttachmentInfo.sType =
+        VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    renderingColorAttachmentInfo.imageView =
+        mSwapChainImageViews[i];
+    renderingColorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    VkClearValue clearColor = {{{0.2f, 0.2f, 0.2f, 1.0f}}};
+    renderingColorAttachmentInfo.clearValue = clearColor;
+    */
+
 
 
     VkRenderingInfoKHR renderingInfo{};
@@ -353,11 +383,16 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     clearColorDepth.depthStencil = {1.0f, 0};
     renderingDepthAttachmentInfo.clearValue = clearColorDepth;
     renderingInfo.pDepthAttachment = &renderingDepthAttachmentInfo;
+    renderingInfo.pDepthAttachment = nullptr;
   
     // dynamic rendering end
     //===============================================================
 
     vkCmdBeginRendering(mDrawingCommandBuffers[i], &renderingInfo);
+
+PFN_vkCmdSetRasterizationSamplesEXT vkCmdSetRasterizationSamplesEXT     = PFN_vkCmdSetRasterizationSamplesEXT( vkGetDeviceProcAddr( mLogicalDevice, "vkCmdSetRasterizationSamplesEXT" ) );    
+vkCmdSetRasterizationSamplesEXT(mDrawingCommandBuffers[i], mMsaaSamples);
+
 
 
     // drawFromVertices(mDrawingCommandBuffers[i],
@@ -368,7 +403,7 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
 
     // For multiple objects, add more calls to drawFromDescriptors
     //drawFromDescriptors(mDrawingCommandBuffers[i], mGraphicsPipeline, mVertices, mIndices, mVertexBuffer, mIndexBuffer);
-
+    //
     for(int k = 0; k < mModels.size(); k++) {
 
       drawFromDescriptors(mDrawingCommandBuffers[i], 
@@ -571,6 +606,7 @@ void VulkanRenderer::createGraphicsPipeline() {
   VkGraphicsPipelineCreateInfo PIPElineInfo{};
   PIPElineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
+
   //================================================================================================
   // Create shader stage
   //================================================================================================
@@ -660,7 +696,9 @@ void VulkanRenderer::createGraphicsPipeline() {
   VkPipelineMultisampleStateCreateInfo multisampleState = 
     VulkanInit::pipeline_multisample_state_create_info(mMsaaSamples, 0);
 
-  PIPElineInfo.pMultisampleState = &multisampleState;
+  //PIPElineInfo.pMultisampleState = &multisampleState;
+  PIPElineInfo.pMultisampleState = nullptr;
+
   //================================================================================================
   // pDepthStencilState
   //================================================================================================
@@ -689,7 +727,20 @@ void VulkanRenderer::createGraphicsPipeline() {
   PIPElineInfo.pColorBlendState = &colorBlendState;
   //================================================================================================
 
-  PIPElineInfo.pDynamicState = nullptr; // Optional
+  // PIPElineInfo.pDynamicState = nullptr; // Optional
+  //
+  VkPipelineDynamicStateCreateInfo dynamic_state_info{};
+dynamic_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+const VkDynamicState dynamicStates[] = {
+VK_DYNAMIC_STATE_SAMPLE_MASK_EXT,
+VK_DYNAMIC_STATE_ALPHA_TO_COVERAGE_ENABLE_EXT,
+VK_DYNAMIC_STATE_ALPHA_TO_ONE_ENABLE_EXT ,
+VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT };
+dynamic_state_info.dynamicStateCount = static_cast<uint32_t>(std::size(dynamicStates));
+dynamic_state_info.pDynamicStates = dynamicStates;
+
+  PIPElineInfo.pDynamicState = &dynamic_state_info; // Optional
+
   //================================================================================================
   // pipelineLayout
   //================================================================================================
