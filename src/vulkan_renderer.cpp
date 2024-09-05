@@ -69,6 +69,7 @@ void VulkanRenderer::beginVulkanObjectCreation(){
   createSyncObjects(mSwapChainImageCount);
 
   createDepthImage();
+  createColorResources();
   //loaded before creating the descriptor set bindings
   loadTextures();
 
@@ -165,17 +166,18 @@ void VulkanRenderer::pickPhysicalDevice() {
     VkSampleCountFlags sampleCounts = deviceProperties.limits.framebufferColorSampleCounts &
                                       deviceProperties.limits.framebufferDepthSampleCounts;
 
-    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-    if ( sampleCounts & VK_SAMPLE_COUNT_64_BIT) { msaaSamples = VK_SAMPLE_COUNT_64_BIT; }
-    else if ( sampleCounts & VK_SAMPLE_COUNT_32_BIT) { msaaSamples = VK_SAMPLE_COUNT_32_BIT; }
-    else if ( sampleCounts & VK_SAMPLE_COUNT_16_BIT) { msaaSamples = VK_SAMPLE_COUNT_16_BIT; }
-    else if ( sampleCounts & VK_SAMPLE_COUNT_8_BIT)  { msaaSamples = VK_SAMPLE_COUNT_8_BIT; }
-    else if ( sampleCounts & VK_SAMPLE_COUNT_4_BIT)  { msaaSamples = VK_SAMPLE_COUNT_4_BIT; }
-    else if ( sampleCounts & VK_SAMPLE_COUNT_2_BIT)  { msaaSamples = VK_SAMPLE_COUNT_2_BIT; }
+    mMsaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    if ( sampleCounts & VK_SAMPLE_COUNT_64_BIT)      { mMsaaSamples = VK_SAMPLE_COUNT_64_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_32_BIT) { mMsaaSamples = VK_SAMPLE_COUNT_32_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_16_BIT) { mMsaaSamples = VK_SAMPLE_COUNT_16_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_8_BIT)  { mMsaaSamples = VK_SAMPLE_COUNT_8_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_4_BIT)  { mMsaaSamples = VK_SAMPLE_COUNT_4_BIT; }
+    else if ( sampleCounts & VK_SAMPLE_COUNT_2_BIT)  { mMsaaSamples = VK_SAMPLE_COUNT_2_BIT; }
+    
 
     std::cout << "Max bound descriptorSets: " <<  deviceProperties.limits.maxBoundDescriptorSets << "\n";
     std::cout << "sampleCounts: " <<  sampleCounts << "\n";
-    std::cout << "msaaCounts: " <<  msaaSamples << "\n";
+    std::cout << "msaaCounts: " <<  mMsaaSamples << "\n";
   }
 }
 
@@ -319,13 +321,17 @@ void VulkanRenderer::buildDrawingCommandBuffers(){
     renderingColorAttachmentInfo.sType =
         VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     renderingColorAttachmentInfo.imageView =
-        mSwapChainImageViews[i];
-    renderingColorAttachmentInfo.imageLayout =
-        VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+        mColorImageView;
+    renderingColorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     renderingColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     renderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     VkClearValue clearColor = {{{0.2f, 0.2f, 0.2f, 1.0f}}};
     renderingColorAttachmentInfo.clearValue = clearColor;
+
+    renderingColorAttachmentInfo.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+    renderingColorAttachmentInfo.resolveImageView = mSwapChainImageViews[i];
+    renderingColorAttachmentInfo.resolveImageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+
 
     VkRenderingInfoKHR renderingInfo{};
     renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
@@ -432,6 +438,7 @@ void VulkanRenderer::createSwapChain(VkSurfaceKHR surface) {
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
+
   uint32_t queueFamilyIndices[] = {mQueueFamilyIndices.graphicsFamily,
                                    mQueueFamilyIndices.presentFamily};
 
@@ -490,7 +497,7 @@ void VulkanRenderer::createDepthImage() {
 	image_create_info.format            = format;
 	image_create_info.mipLevels         = 1;
 	image_create_info.arrayLayers       = 1;
-	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.samples           = mMsaaSamples;
 	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
 	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -519,7 +526,39 @@ void VulkanRenderer::createDepthImage() {
       mDepthImage, 
       format, 
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}
 
+// for MSAA
+void VulkanRenderer::createColorResources() {
+
+  VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+	VkImageCreateInfo image_create_info = VulkanInit::image_create_info();
+	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
+	image_create_info.format            = format;
+	image_create_info.mipLevels         = 1;
+	image_create_info.arrayLayers       = 1;
+	image_create_info.samples           = mMsaaSamples;
+	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.extent.width  = mSwapChainExtent.width;
+	image_create_info.extent.height = mSwapChainExtent.height;
+	image_create_info.extent.depth  = 1;
+	image_create_info.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	VK_CHECK(vkCreateImage(mLogicalDevice, &image_create_info, nullptr, &mColorImage), "vkCreateImage");
+  VkMemoryRequirements memRequirements;
+  vkGetImageMemoryRequirements(mLogicalDevice, mDepthImage, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = VulkanHelper::findMemoryType(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  VK_CHECK(vkAllocateMemory(mLogicalDevice, &allocInfo, nullptr, &mColorImageMemory), "vkAllocateMemory"); 
+
+  vkBindImageMemory(mLogicalDevice, mColorImage, mColorImageMemory, 0);
+
+  mColorImageView = VulkanHelper::createImageView(mLogicalDevice, mColorImage, format, VK_IMAGE_ASPECT_COLOR_BIT);
 
 }
 
@@ -619,7 +658,7 @@ void VulkanRenderer::createGraphicsPipeline() {
   // pMultisampleState
   //================================================================================================
   VkPipelineMultisampleStateCreateInfo multisampleState = 
-    VulkanInit::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+    VulkanInit::pipeline_multisample_state_create_info(mMsaaSamples, 0);
 
   PIPElineInfo.pMultisampleState = &multisampleState;
   //================================================================================================
@@ -803,7 +842,8 @@ void VulkanRenderer::loadTextures() {
                                                           mPhysicalDevice,
                                                           mLogicalDevice,
                                                           mCommandPool,
-                                                          mGraphicsQueue);
+                                                          mGraphicsQueue,
+                                                          mMsaaSamples);
     mTextures.push_back(firstTexture);
   }
 }

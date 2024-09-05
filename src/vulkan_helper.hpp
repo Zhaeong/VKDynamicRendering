@@ -674,7 +674,8 @@ inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
                         VkPhysicalDevice physicalDevice,
                         VkDevice device, 
                         VkCommandPool commandPool,
-                        VkQueue submitQueue) {
+                        VkQueue submitQueue,
+                        VkSampleCountFlagBits numSample) {
   Utils::Texture texture{};
 
   texture.texPath = texPath;
@@ -717,7 +718,7 @@ inline Utils::Texture loadTexture(const char *texPath, VkFormat format,
 	image_create_info.format            = format;
 	image_create_info.mipLevels         = texture.mip_levels;
 	image_create_info.arrayLayers       = 1;
-	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.samples           = numSample;
 	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
 	// Set initial layout of the image to undefined

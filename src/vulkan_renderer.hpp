@@ -48,6 +48,7 @@ public:
   VkQueue mGraphicsQueue;
   VkQueue mPresentQueue;
 
+  VkSampleCountFlagBits mMsaaSamples;
   //===================================================
   // Command Submission
   uint32_t mCurrentSwapChainImage = 0;
@@ -73,6 +74,10 @@ public:
   VkDeviceMemory mDepthImageMemory;
   VkImageView mDepthImageView;
 
+  //color image for msaa
+  VkImage mColorImage;
+  VkDeviceMemory mColorImageMemory;
+  VkImageView mColorImageView;
   //===================================================
   // Pipeline
   VkPipelineLayout mPipelineLayout;
@@ -130,6 +135,7 @@ public:
   void recreateSwapChain();
 
   void createDepthImage();
+  void createColorResources();
 
   //DescriptorSetLayout, pipelineLayout
   void setupDescriptorSetLayout();
